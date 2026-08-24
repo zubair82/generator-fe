@@ -1,0 +1,8 @@
+{
+  "name": "ExamSimula",
+  "description": "Academic parsing, automated extraction, manual review, and variant generation system for question papers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
