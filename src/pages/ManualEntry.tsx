@@ -120,7 +120,7 @@ export function ManualEntry() {
   const fetchQuestion = async (qNo: number) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`http://localhost:8000/api/question-by-no?paper_name=${encodeURIComponent(paperName)}&question_no=${qNo}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/question-by-no?paper_name=${encodeURIComponent(paperName)}&question_no=${qNo}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -192,7 +192,7 @@ export function ManualEntry() {
         const token = localStorage.getItem('auth_token');
         const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
         
-        const response = await fetch('http://localhost:8000/api/add-exam-paper', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/add-exam-paper`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -252,7 +252,7 @@ export function ManualEntry() {
         estimated_time_seconds: estimatedTime ? parseInt(estimatedTime, 10) : null
       };
 
-      const qResponse = await fetch('http://localhost:8000/api/create-question', {
+      const qResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/create-question`, {
         method: 'POST',
         headers,
         body: JSON.stringify(questionPayload)
@@ -322,7 +322,7 @@ export function ManualEntry() {
         estimated_time_seconds: estimatedTime ? parseInt(estimatedTime, 10) : null
       };
 
-      const qResponse = await fetch(`http://localhost:8000/api/update-question/${currentQuestionId}`, {
+      const qResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/update-question/${currentQuestionId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(questionPayload)
@@ -353,7 +353,7 @@ export function ManualEntry() {
       const token = localStorage.getItem('auth_token');
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
-      const response = await fetch(`http://localhost:8000/api/update-exam-paper/${encodeURIComponent(paperName)}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/update-exam-paper/${encodeURIComponent(paperName)}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ total_questions: parseInt(totalQuestions, 10) })
@@ -372,7 +372,7 @@ export function ManualEntry() {
   const handleFinalizePaper = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`http://localhost:8000/api/move-to-production/${encodeURIComponent(paperName)}?type=Manually-Uploaded`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/move-to-production/${encodeURIComponent(paperName)}?type=Manually-Uploaded`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -93,7 +93,7 @@ export function Review() {
       const token = localStorage.getItem('auth_token');
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
-      const prodRes = await fetch(`http://localhost:8000/api/production-questions/by-state?paper_name=${encodeURIComponent(paper)}&state=Sandbox-Verified,Sandbox-Skipped,Reviewed,Completed`, { headers });
+      const prodRes = await fetch(`${import.meta.env.VITE_API_URL}/api/production-questions/by-state?paper_name=${encodeURIComponent(paper)}&state=Sandbox-Verified,Sandbox-Skipped,Reviewed,Completed`, { headers });
       
       if (prodRes.status === 404) {
         addToast('No more questions to review for this paper.', 'success');
@@ -120,7 +120,7 @@ export function Review() {
       const token = localStorage.getItem('auth_token');
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
-      const res = await fetch(`http://localhost:8000/api/production-question?paper_name=${encodeURIComponent(paper)}&question_no=${qNo}`, { headers });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/production-question?paper_name=${encodeURIComponent(paper)}&question_no=${qNo}`, { headers });
       
       if (!res.ok) {
         addToast(`Could not load question ${qNo}`, 'error');
@@ -203,7 +203,7 @@ export function Review() {
         tag: tag
       };
       
-      const res = await fetch(`http://localhost:8000/api/production-questions/${questionId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/production-questions/${questionId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(payload)

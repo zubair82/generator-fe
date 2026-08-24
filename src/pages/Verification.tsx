@@ -49,7 +49,7 @@ export function Verification() {
     try {
       setLoading(true);
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8000/api/questions?paper_name=${encodeURIComponent(paperName)}&state=${encodeURIComponent(paperState)}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions?paper_name=${encodeURIComponent(paperName)}&state=${encodeURIComponent(paperState)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -94,7 +94,7 @@ export function Verification() {
       setLoading(true);
       const token = localStorage.getItem('auth_token');
       const prevQuestionId = question.question_id - 1;
-      const response = await fetch(`http://localhost:8000/api/questions/${prevQuestionId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions/${prevQuestionId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -127,7 +127,7 @@ export function Verification() {
       setLoading(true);
       const token = localStorage.getItem('auth_token');
       const nextQuestionId = question.question_id + 1;
-      const response = await fetch(`http://localhost:8000/api/questions/${nextQuestionId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/questions/${nextQuestionId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -186,7 +186,7 @@ export function Verification() {
         state: 'Manual-Verified'
       };
 
-      const res = await fetch(`http://localhost:8000/api/update-question/${question.question_id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/update-question/${question.question_id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -201,7 +201,7 @@ export function Verification() {
         if (totalQuestions && question.question_no === totalQuestions) {
           try {
             const qType = question.type || 'Manually-Uploaded';
-            const moveRes = await fetch(`http://localhost:8000/api/move-to-production/${encodeURIComponent(paperName)}?type=${encodeURIComponent(qType)}`, {
+            const moveRes = await fetch(`${import.meta.env.VITE_API_URL}/api/move-to-production/${encodeURIComponent(paperName)}?type=${encodeURIComponent(qType)}`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -328,7 +328,7 @@ export function Verification() {
           </div>
           <div className="w-full h-full pt-16 pb-4 px-4 flex justify-center items-center">
             <iframe
-              src={`http://localhost:8000/api/pdf/${encodeURIComponent(paperName)}.pdf#zoom=${zoomLevel}&navpanes=0&toolbar=0`}
+              src={`${import.meta.env.VITE_API_URL}/api/pdf/${encodeURIComponent(paperName)}.pdf#zoom=${zoomLevel}&navpanes=0&toolbar=0`}
               className="w-full h-full bg-white rounded-xl shadow-sm border border-slate-300"
               title="Source PDF"
               onError={() => addToast(`PDF not found: ${paperName}.pdf`, 'error')}

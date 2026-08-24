@@ -55,7 +55,7 @@ export function VariantGen() {
   const fetchVariantData = async (qNo: number, pName: string, originalQ?: any) => {
     const token = localStorage.getItem('auth_token');
     const targetPName = pName.replace(/_vari?ent$/i, '') + '_varient';
-    const variantResponse = await fetch(`http://localhost:8000/api/production-question?paper_name=${encodeURIComponent(targetPName)}&question_no=${qNo}`, {
+    const variantResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/production-question?paper_name=${encodeURIComponent(targetPName)}&question_no=${qNo}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (variantResponse.ok) {
@@ -81,9 +81,9 @@ export function VariantGen() {
       setLoading(true);
       const token = localStorage.getItem('auth_token');
       
-      let url = `http://localhost:8000/api/questions?paper_name=${encodeURIComponent(basePaperName)}&state=${encodeURIComponent(paperState)}`;
+      let url = `${import.meta.env.VITE_API_URL}/api/questions?paper_name=${encodeURIComponent(basePaperName)}&state=${encodeURIComponent(paperState)}`;
       if (targetQNo !== undefined) {
-        url = `http://localhost:8000/api/question-by-no?paper_name=${encodeURIComponent(basePaperName)}&question_no=${targetQNo}`;
+        url = `${import.meta.env.VITE_API_URL}/api/question-by-no?paper_name=${encodeURIComponent(basePaperName)}&question_no=${targetQNo}`;
       }
 
       const response = await fetch(url, {
@@ -135,7 +135,7 @@ export function VariantGen() {
       const token = localStorage.getItem('auth_token');
       const isContextual = activeGenParam !== 'Numerical';
       const modeStr = isContextual ? 'rephrase' : 'parameter_change';
-      const baseUrl = `http://localhost:8000/api/variant-generator/${encodeURIComponent(basePaperName)}?question_no=${question.question_no}&mode=${modeStr}`;
+      const baseUrl = `${import.meta.env.VITE_API_URL}/api/variant-generator/${encodeURIComponent(basePaperName)}?question_no=${question.question_no}&mode=${modeStr}`;
       
       const variantTypeStr = isContextual ? 'Contextual' : 'Numerical';
       addToast(`Generating ${variantTypeStr} variant (Sandbox Skipped)...`, 'info');
@@ -186,7 +186,7 @@ export function VariantGen() {
     if (!question) return;
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('http://localhost:8000/api/approve-variant', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/approve-variant`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -228,7 +228,7 @@ export function VariantGen() {
     
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`http://localhost:8000/api/discard-variant?paper_name=${encodeURIComponent(variantPaperName)}&question_no=${question.question_no}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/discard-variant?paper_name=${encodeURIComponent(variantPaperName)}&question_no=${question.question_no}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

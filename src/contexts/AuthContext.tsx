@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    fetch('http://localhost:5001/api/v1/auth/me', {
+    fetch(`${import.meta.env.VITE_AUTH_URL}/api/v1/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem('auth_token');
     if (token) {
       try {
-        await fetch('http://localhost:5001/api/v1/auth/logout', {
+        await fetch(`${import.meta.env.VITE_AUTH_URL}/api/v1/auth/logout`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });

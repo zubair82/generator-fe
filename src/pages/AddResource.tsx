@@ -26,7 +26,7 @@ export function AddResource() {
     const fetchTopics = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        const res = await fetch('http://localhost:8000/api/topics', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/topics`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -59,7 +59,7 @@ export function AddResource() {
       setIsFetchingMeta(true);
       try {
         const token = localStorage.getItem('auth_token');
-        const res = await fetch(`http://localhost:8000/api/v1/utils/youtube-meta?url=${encodeURIComponent(newUrl)}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/utils/youtube-meta?url=${encodeURIComponent(newUrl)}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -106,7 +106,7 @@ export function AddResource() {
         is_active: true
       };
 
-      const resResponse = await fetch('http://localhost:8000/api/study-resource', {
+      const resResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/study-resource`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ export function AddResource() {
           topic_ids: selectedTopics.map(t => t.id)
         };
 
-        const mapResponse = await fetch('http://localhost:8000/api/study-resource-mapping', {
+        const mapResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/study-resource-mapping`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

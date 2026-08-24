@@ -53,7 +53,7 @@ export function Login() {
         <div className="flex flex-col gap-4">
           {isTeacherDomain && (
             <a
-              href="http://localhost:5001/api/v1/auth/google/login?role=TEACHER"
+              href={`${import.meta.env.VITE_AUTH_URL}/api/v1/auth/google/login?role=TEACHER`}
               className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#003fb1] text-white rounded-xl font-semibold hover:bg-blue-800 transition-colors shadow-md shadow-blue-900/20"
             >
               Teacher Login
@@ -62,7 +62,7 @@ export function Login() {
 
           {isAdminDomain && (
             <a
-              href="http://localhost:5001/api/v1/auth/google/login?role=ADMIN"
+              href={`${import.meta.env.VITE_AUTH_URL}/api/v1/auth/google/login?role=ADMIN`}
               className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold transition-colors ${
                 isAdminDomain 
                   ? "bg-[#003fb1] text-white hover:bg-blue-800 shadow-md shadow-blue-900/20" 

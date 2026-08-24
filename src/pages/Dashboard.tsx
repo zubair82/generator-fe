@@ -27,7 +27,7 @@ export function Dashboard() {
     const fetchPapers = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch('http://localhost:8000/api/exam-papers', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/exam-papers`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -48,7 +48,7 @@ export function Dashboard() {
     const fetchVerifiedCount = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch('http://localhost:8000/api/production-questions/count', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/production-questions/count`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -258,7 +258,7 @@ export function Dashboard() {
                                       try {
                                         const token = localStorage.getItem('auth_token');
                                         const newStatus = !paper.is_active;
-                                        const res = await fetch(`http://localhost:8000/api/exam-paper/${encodeURIComponent(paper.paper_name)}/status?is_active=${newStatus}`, {
+                                        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/exam-paper/${encodeURIComponent(paper.paper_name)}/status?is_active=${newStatus}`, {
                                           method: 'PATCH',
                                           headers: { 'Authorization': `Bearer ${token}` }
                                         });

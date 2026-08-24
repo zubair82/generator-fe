@@ -54,7 +54,7 @@ export function UploadPdf() {
       const formData = new FormData();
       formData.append('file', actualFile);
       
-      const response = await fetch('http://localhost:8000/api/upload-pdf', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload-pdf`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -124,7 +124,7 @@ export function UploadPdf() {
       const yearAndShiftParam = pdfExamCode || 'Unknown';
 
       // 1. Call pdf-to-json API
-      const extractResponse = await fetch(`http://localhost:8000/api/pdf-to-json?pdf_path=${encodeURIComponent(pdfPath)}&exam_code=${encodeURIComponent(examCodeParam)}&year_and_shift=${encodeURIComponent(yearAndShiftParam)}`, {
+      const extractResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/pdf-to-json?pdf_path=${encodeURIComponent(pdfPath)}&exam_code=${encodeURIComponent(examCodeParam)}&year_and_shift=${encodeURIComponent(yearAndShiftParam)}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -139,8 +139,8 @@ export function UploadPdf() {
 
       // 2. Call the appropriate upload API based on Processing Mode
       const uploadEndpoint = processingMode === 'variant' 
-        ? `http://localhost:8000/api/upload-questions/${encodeURIComponent(finalPaperName)}`
-        : `http://localhost:8000/api/upload-production-questions/${encodeURIComponent(finalPaperName)}`;
+        ? `${import.meta.env.VITE_API_URL}/api/upload-questions/${encodeURIComponent(finalPaperName)}`
+        : `${import.meta.env.VITE_API_URL}/api/upload-production-questions/${encodeURIComponent(finalPaperName)}`;
 
       const uploadResponse = await fetch(uploadEndpoint, {
         method: 'POST',
