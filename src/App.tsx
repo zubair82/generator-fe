@@ -17,6 +17,8 @@ import { VariantGen } from './pages/VariantGen';
 import { Verification } from './pages/Verification';
 import { Review } from './pages/Review';
 import { AddResource } from './pages/AddResource';
+import { Registration } from './pages/Registration';
+import { Students } from './pages/Students';
 
 function App() {
   return (
@@ -24,13 +26,18 @@ function App() {
       <UIProvider>
         <AppProvider>
           <Routes>
-            {/* Public route */}
+            {/* Standalone full-screen routes */}
             <Route path="/login" element={<Login />} />
+            <Route path="/registration" element={<Registration />} />
+            <Route path="/application" element={<Navigate to="/registration" replace />} />
 
             {/* Protected routes wrapped in MainLayout */}
             <Route element={<MainLayout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/papers" element={<Papers />} />
+              <Route path="/students" element={<Students />} />
+              <Route path="/student_roster" element={<Navigate to="/students" replace />} />
               <Route path="/upload_pdf" element={<UploadPdf />} />
               <Route path="/manual_entry" element={<ManualEntry />} />
               <Route path="/variant_gen" element={<VariantGen />} />

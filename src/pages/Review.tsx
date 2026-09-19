@@ -229,24 +229,24 @@ export function Review() {
 
   return (
     <div className="space-y-6 flex-1 w-full h-full flex flex-col">
-      {/* Sticky Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+      {/* Header Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-700/60 pb-4">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/dashboard')}
-            className="p-1 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="font-sans font-bold text-2xl text-slate-900 tracking-tight">Review</h2>
-            <p className="text-xs text-slate-500">Review Sandbox-verified variants before completing the process.</p>
+            <h2 className="font-sans font-bold text-2xl text-slate-900 dark:text-white tracking-tight">Review</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Review Sandbox-verified variants before completing the process.</p>
           </div>
         </div>
 
         <div className="flex gap-2">
           <button 
-            className="flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center bg-white dark:bg-[#252b3b] border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
             onClick={() => {
               if (currentQNo && currentQNo > 1) loadQuestionByNo(currentQNo - 1);
             }}
@@ -256,7 +256,7 @@ export function Review() {
           </button>
           
           <button 
-            className="flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center bg-white dark:bg-[#252b3b] border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
             onClick={() => {
               if (currentQNo && currentQNo < totalQuestions) loadQuestionByNo(currentQNo + 1);
             }}
@@ -266,7 +266,7 @@ export function Review() {
           </button>
 
           <button 
-            className="flex items-center gap-2 bg-[#003fb1] hover:bg-[#002f8a] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50 ml-2"
+            className="flex items-center gap-2 bg-[#003fb1] dark:bg-blue-600 hover:bg-[#002f8a] dark:hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:opacity-50 ml-2"
             onClick={handleFinalize}
             disabled={loading}
           >
@@ -278,18 +278,18 @@ export function Review() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4 lg:h-[calc(100vh-160px)] overflow-y-auto pr-1">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Review Content</h3>
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Review Content</h3>
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
               <button
                 onClick={() => setPreviewMode(false)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!previewMode ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!previewMode ? 'bg-white dark:bg-[#252b3b] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit Mode
               </button>
               <button
                 onClick={() => setPreviewMode(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewMode ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewMode ? 'bg-white dark:bg-[#252b3b] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 <Eye className="w-3.5 h-3.5" />
                 Preview
@@ -299,8 +299,8 @@ export function Review() {
 
           {!previewMode && <MathToolbar activeField={activeFieldId} onInsertSymbol={handleInsertSymbol} />}
           
-            <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <label className="block font-semibold text-sm text-slate-800 mb-2">1. Question Content <span className="text-red-500">*</span></label>
+            <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">1. Question Content <span className="text-red-500">*</span></label>
             {previewMode ? (
                <LivePreview content={questionText} diagramsText={diagrams} />
             ) : (
@@ -315,10 +315,10 @@ export function Review() {
           </div>
 
           {questionType !== 'numerical' && (
-            <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
               <div className="flex justify-between items-center mb-4">
-                <label className="font-semibold text-sm text-slate-800">2. Options & Correct Indicator <span className="text-red-500">*</span></label>
-                <span className="text-xs font-semibold px-3 py-1 bg-blue-50 text-[#003fb1] rounded-full">
+                <label className="font-semibold text-sm text-slate-800 dark:text-slate-100">2. Options & Correct Indicator <span className="text-red-500">*</span></label>
+                <span className="text-xs font-semibold px-3 py-1 bg-blue-50 dark:bg-blue-950/70 text-[#003fb1] dark:text-blue-400 rounded-full">
                   Select radio of correct answer
                 </span>
               </div>
@@ -327,7 +327,7 @@ export function Review() {
                 {['A', 'B', 'C', 'D'].map((opt) => (
                   <div
                     key={opt}
-                    className="flex items-center gap-3 p-2 border border-slate-100 rounded-xl hover:border-[#003fb1] transition-all bg-slate-50/20"
+                    className="flex items-center gap-3 p-2 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-[#003fb1] dark:hover:border-blue-500 transition-all bg-slate-50/20 dark:bg-[#1e2330]"
                   >
                     <input
                       type="radio"
@@ -336,9 +336,9 @@ export function Review() {
                       onChange={() => {
                         setCorrectOption(opt as 'A' | 'B' | 'C' | 'D');
                       }}
-                      className="w-4 h-4 text-[#003fb1] focus:ring-[#003fb1]"
+                      className="w-4 h-4 text-[#003fb1] dark:text-blue-500 bg-white dark:bg-[#1a1e29] border-slate-300 dark:border-slate-600 accent-[#003fb1] dark:accent-blue-500 focus:ring-[#003fb1] dark:focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="font-bold text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded">{opt}</span>
+                    <span className="font-bold text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded">{opt}</span>
                     {previewMode ? (
                        <div className="flex-1 min-w-0">
                          <LivePreview content={opt === 'A' ? optionA : opt === 'B' ? optionB : opt === 'C' ? optionC : optionD} diagramsText={diagrams} />
@@ -365,8 +365,8 @@ export function Review() {
             </div>
           )}
           
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <label className="block font-semibold text-sm text-slate-800 mb-2">3. Answer <span className="text-red-500">*</span></label>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">3. Answer <span className="text-red-500">*</span></label>
             {previewMode ? (
                <LivePreview content={answer} diagramsText={diagrams} />
             ) : (
@@ -380,8 +380,8 @@ export function Review() {
             )}
           </div>
           
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <label className="block font-semibold text-sm text-slate-800 mb-2">4. Explanation <span className="text-red-500">*</span></label>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">4. Explanation <span className="text-red-500">*</span></label>
             {previewMode ? (
                <LivePreview content={explanation} diagramsText={diagrams} />
             ) : (
@@ -395,16 +395,16 @@ export function Review() {
             )}
            </div>
            
-           <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
+           <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
             <div className="flex justify-between items-center mb-2">
-              <label className="block font-semibold text-sm text-slate-800">5. Diagrams</label>
-              <span className="text-[10px] text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">Paste Image Here</span>
+              <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100">5. Diagrams</label>
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider">Paste Image Here</span>
             </div>
             {previewMode ? (
                <LivePreview content={diagrams} />
             ) : (
                <textarea
-                 className="w-full min-h-[100px] bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-700 outline-none focus:border-[#003fb1] focus:ring-2 focus:ring-blue-500/20 transition-all font-mono resize-y"
+                 className="w-full min-h-[100px] bg-slate-50 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm text-slate-700 dark:text-slate-100 outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono resize-y"
                  placeholder="Paste cropped image here (Cmd+V / Ctrl+V)"
                  value={diagrams || ''}
                  onChange={(e) => setDiagrams(e.target.value)}
@@ -415,43 +415,43 @@ export function Review() {
          </div>
  
         <div className="space-y-4 lg:h-[calc(100vh-160px)] overflow-y-auto pr-1">
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm space-y-6">
-            <h3 className="font-semibold text-sm text-slate-800 border-b border-slate-100 pb-3 mb-4">Question Metadata (Q{currentQNo})</h3>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm space-y-6 transition-colors">
+            <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700/60 pb-3 mb-4">Question Metadata (Q{currentQNo})</h3>
 
             <div>
-              <label className="text-xs font-bold text-slate-800 mb-2 block uppercase tracking-wide">Status</label>
-              <div className="p-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500 font-medium">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Status</label>
+              <div className="p-2 bg-slate-100 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-medium">
                 {status || 'Unknown'}
               </div>
             </div>
             
             <div>
-              <label className="text-xs font-bold text-slate-800 mb-2 block uppercase tracking-wide">Exam Code</label>
-              <div className="p-2 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-500 font-medium">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Exam Code</label>
+              <div className="p-2 bg-slate-100 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-medium">
                 {examCode || 'Unknown'}
               </div>
             </div>
             
             <div>
-              <label className="text-xs font-bold text-slate-800 mb-2 block uppercase tracking-wide">Subject <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Subject <span className="text-red-500">*</span></label>
               <select
-                className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200"
                 value={subject ? subject.toLowerCase() : ''}
                 onChange={(e) => setSubject(e.target.value)}
               >
-                <option value="" disabled>Select one</option>
-                <option value="physics">Physics</option>
-                <option value="chemistry">Chemistry</option>
-                <option value="mathematics">Mathematics</option>
-                <option value="biology">Biology</option>
+                <option value="" disabled className="dark:bg-[#1a1e29]">Select one</option>
+                <option value="physics" className="dark:bg-[#1a1e29]">Physics</option>
+                <option value="chemistry" className="dark:bg-[#1a1e29]">Chemistry</option>
+                <option value="mathematics" className="dark:bg-[#1a1e29]">Mathematics</option>
+                <option value="biology" className="dark:bg-[#1a1e29]">Biology</option>
               </select>
             </div>
             
             <div>
-              <label className="text-xs font-bold text-slate-800 mb-2 block uppercase tracking-wide">Tag/Topic <span className="text-red-500">*</span></label>
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Tag/Topic <span className="text-red-500">*</span></label>
               <input
                 type="text"
-                className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-400"
                 value={tag || ''}
                 onChange={(e) => setTag(e.target.value)}
                 placeholder="e.g. Thermodynamics"

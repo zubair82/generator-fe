@@ -399,17 +399,17 @@ export function ManualEntry() {
   return (
     <div className="space-y-6 flex-1 w-full h-full flex flex-col">
       {/* Sticky Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-700/60 pb-4">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/dashboard')}
-            className="p-1 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="font-sans font-bold text-2xl text-slate-900 tracking-tight">Manual Question Entry</h2>
-            <p className="text-xs text-slate-500">Compile exam questions by adding text, LaTeX, options and tagging metadata.</p>
+            <h2 className="font-sans font-bold text-2xl text-slate-900 dark:text-white tracking-tight">Manual Question Entry</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Compile exam questions by adding text, LaTeX, options and tagging metadata.</p>
           </div>
         </div>
 
@@ -417,7 +417,7 @@ export function ManualEntry() {
           <button
             onClick={handleFinalizePaper}
             disabled={!totalQuestions || questionsCount < parseInt(totalQuestions, 10)}
-            className="px-5 py-2 bg-[#003fb1] text-white text-xs font-semibold rounded-lg hover:bg-blue-800 transition-colors shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed"
+            className="px-5 py-2 bg-[#003fb1] dark:bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-800 dark:hover:bg-blue-700 transition-colors shadow-sm disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed"
           >
             Finalize Question Paper
           </button>
@@ -427,18 +427,18 @@ export function ManualEntry() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4 lg:h-[calc(100vh-160px)] overflow-y-auto pr-1">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">Entry Content</h3>
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Entry Content</h3>
+            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
               <button
                 onClick={() => setPreviewMode(false)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!previewMode ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!previewMode ? 'bg-white dark:bg-[#252b3b] text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 <Pencil className="w-3.5 h-3.5" />
                 Edit Mode
               </button>
               <button
                 onClick={() => setPreviewMode(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewMode ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${previewMode ? 'bg-white dark:bg-[#252b3b] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 <Eye className="w-3.5 h-3.5" />
                 Preview
@@ -448,8 +448,8 @@ export function ManualEntry() {
 
           {!previewMode && <MathToolbar activeField={activeFieldId} onInsertSymbol={handleInsertSymbol} />}
 
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <label className="block font-semibold text-sm text-slate-800 mb-2">1. Question Content <span className="text-red-500">*</span></label>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">1. Question Content <span className="text-red-500">*</span></label>
             {previewMode ? (
                <LivePreview content={questionText} diagramsText={diagrams} />
             ) : (
@@ -463,10 +463,10 @@ export function ManualEntry() {
             )}
           </div>
 
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
             <div className="flex justify-between items-center mb-4">
-              <label className="font-semibold text-sm text-slate-800">2. Options & Correct Indicator <span className="text-red-500">*</span></label>
-              <span className="text-xs font-semibold px-3 py-1 bg-blue-50 text-[#003fb1] rounded-full">
+              <label className="font-semibold text-sm text-slate-800 dark:text-slate-100">2. Options & Correct Indicator <span className="text-red-500">*</span></label>
+              <span className="text-xs font-semibold px-3 py-1 bg-blue-50 dark:bg-blue-950/70 text-[#003fb1] dark:text-blue-400 rounded-full">
                 Select radio of correct answer
               </span>
             </div>
@@ -475,7 +475,7 @@ export function ManualEntry() {
               {['A', 'B', 'C', 'D'].map((opt) => (
                 <div
                   key={opt}
-                  className="flex items-center gap-3 p-2 border border-slate-100 rounded-xl hover:border-[#003fb1] transition-all bg-slate-50/20"
+                  className="flex items-center gap-3 p-2 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-[#003fb1] dark:hover:border-blue-500 transition-all bg-slate-50/20 dark:bg-[#1e2330]"
                 >
                   <input
                     type="radio"
@@ -484,9 +484,9 @@ export function ManualEntry() {
                     onChange={() => {
                       setCorrectOption(opt as 'A' | 'B' | 'C' | 'D');
                     }}
-                    className="w-4 h-4 text-[#003fb1] focus:ring-[#003fb1]"
+                    className="w-4 h-4 text-[#003fb1] dark:text-blue-500 bg-white dark:bg-[#1a1e29] border-slate-300 dark:border-slate-600 accent-[#003fb1] dark:accent-blue-500 focus:ring-[#003fb1] dark:focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="font-bold text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded">{opt}</span>
+                  <span className="font-bold text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded">{opt}</span>
                   {previewMode ? (
                      <div className="flex-1 min-w-0">
                        <LivePreview content={opt === 'A' ? optionA : opt === 'B' ? optionB : opt === 'C' ? optionC : optionD} diagramsText={diagrams} />
@@ -512,8 +512,8 @@ export function ManualEntry() {
             </div>
           </div>
           
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <label className="block font-semibold text-sm text-slate-800 mb-2">3. Answer <span className="text-red-500">*</span></label>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">3. Answer <span className="text-red-500">*</span></label>
             {previewMode ? (
                <LivePreview content={answer} diagramsText={diagrams} />
             ) : (
@@ -527,8 +527,8 @@ export function ManualEntry() {
             )}
           </div>
           
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <label className="block font-semibold text-sm text-slate-800 mb-2">4. Explanation <span className="text-red-500">*</span></label>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">4. Explanation <span className="text-red-500">*</span></label>
             {previewMode ? (
                <LivePreview content={explanation} diagramsText={diagrams} />
             ) : (
@@ -542,16 +542,16 @@ export function ManualEntry() {
             )}
            </div>
            
-           <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
+           <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
             <div className="flex justify-between items-center mb-2">
-              <label className="block font-semibold text-sm text-slate-800">5. Diagrams</label>
-              <span className="text-[10px] text-slate-400 font-medium bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">Paste Image Here</span>
+              <label className="block font-semibold text-sm text-slate-800 dark:text-slate-100">5. Diagrams</label>
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded uppercase tracking-wider">Paste Image Here</span>
             </div>
             {previewMode ? (
                <LivePreview content={diagrams} />
             ) : (
                <textarea
-                 className="w-full min-h-[100px] bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-700 outline-none focus:border-[#003fb1] focus:ring-2 focus:ring-blue-500/20 transition-all font-mono resize-y"
+                 className="w-full min-h-[100px] bg-slate-50 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm text-slate-700 dark:text-slate-100 outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono resize-y"
                  placeholder="Paste cropped image here (Cmd+V / Ctrl+V)"
                  value={diagrams || ''}
                  onChange={(e) => setDiagrams(e.target.value)}
@@ -563,78 +563,78 @@ export function ManualEntry() {
 
         {/* Right Side Metadata Configuration */}
         <div className="space-y-4 lg:h-[calc(100vh-160px)] overflow-y-auto pr-1">
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm space-y-4">
-            <h3 className="font-semibold text-sm text-slate-800 border-b border-slate-100 pb-3 mb-4">Question Parameters (Q{String(currentQuestionNo).padStart(2, '0')})</h3>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm space-y-4 transition-colors">
+            <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700/60 pb-3 mb-4">Question Parameters (Q{String(currentQuestionNo).padStart(2, '0')})</h3>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Exam Code <span className="text-red-500">*</span></label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">Exam Code <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={examCode}
                 onChange={(e) => setExamCode(e.target.value)}
                 placeholder="e.g. JEE-MAIN-2026"
-                className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1] disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-500 disabled:cursor-not-allowed"
                 required
                 disabled={isPaperLocked}
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Paper Name <span className="text-red-500">*</span></label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">Paper Name <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={paperName}
                 onChange={(e) => setPaperName(e.target.value)}
                 placeholder="e.g. JEE_MAIN_2026_Shift_1"
-                className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1] disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-500 disabled:cursor-not-allowed"
                 required
                 disabled={isPaperLocked}
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total Questions <span className="text-red-500">*</span></label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">Total Questions <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 value={totalQuestions}
                 onChange={(e) => setTotalQuestions(e.target.value)}
                 onBlur={handleUpdateTotalQuestions}
                 placeholder="e.g. 75"
-                className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Year & Shift / Institute <span className="text-red-500">*</span></label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">Year & Shift / Institute <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={yearAndShift}
                 onChange={(e) => setYearAndShift(e.target.value)}
                 placeholder="e.g. 2026 Shift 1"
-                className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1] disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 dark:disabled:text-slate-500 disabled:cursor-not-allowed"
                 required
                 disabled={isPaperLocked}
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Subject Core <span className="text-red-500">*</span></label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">Subject Core <span className="text-red-500">*</span></label>
               <select
                 value={manualSubject ? manualSubject.toLowerCase() : ''}
                 onChange={(e) => setManualSubject(e.target.value)}
-                className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
               >
-                <option value="mathematics">Mathematics</option>
-                <option value="physics">Physics</option>
-                <option value="chemistry">Chemistry</option>
-                <option value="biology">Biology</option>
-                <option value="computer science">Computer Science</option>
+                <option value="mathematics" className="dark:bg-[#1a1e29]">Mathematics</option>
+                <option value="physics" className="dark:bg-[#1a1e29]">Physics</option>
+                <option value="chemistry" className="dark:bg-[#1a1e29]">Chemistry</option>
+                <option value="biology" className="dark:bg-[#1a1e29]">Biology</option>
+                <option value="computer science" className="dark:bg-[#1a1e29]">Computer Science</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
                 Cognitive Difficulty <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
@@ -646,8 +646,8 @@ export function ManualEntry() {
                     }}
                     className={`flex-1 py-1.5 border rounded-lg text-xs font-semibold transition-all ${
                       manualDifficulty === diff
-                        ? 'bg-blue-50 border-[#003fb1] text-[#003fb1] shadow-sm'
-                        : 'bg-white border-[#c3c5d7] text-slate-600 hover:bg-slate-50'
+                        ? 'bg-blue-50 dark:bg-blue-950/70 border-[#003fb1] dark:border-blue-500 text-[#003fb1] dark:text-blue-400 shadow-sm'
+                        : 'bg-white dark:bg-[#1a1e29] border-[#c3c5d7] dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
                     {diff}
@@ -657,18 +657,18 @@ export function ManualEntry() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated Time (Seconds)</label>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">Estimated Time (Seconds)</label>
               <input
                 type="number"
                 value={estimatedTime}
                 onChange={(e) => setEstimatedTime(e.target.value)}
                 placeholder="e.g. 120"
-                className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+                className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
                 Tags / Topics Map <span className="text-red-500">*</span>
               </label>
               <form onSubmit={handleManualAddTag} className="flex gap-1.5 mb-2">
@@ -677,11 +677,11 @@ export function ManualEntry() {
                   placeholder="e.g. Calculus"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  className="flex-1 bg-white border border-[#c3c5d7] rounded-lg p-2 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+                  className="flex-1 bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
                 />
                 <button
                   type="submit"
-                  className="px-3 bg-slate-100 text-slate-600 border border-[#c3c5d7] rounded-lg hover:bg-slate-200 text-xs font-semibold transition-colors"
+                  className="px-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-[#c3c5d7] dark:border-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold transition-colors"
                 >
                   Add
                 </button>
@@ -691,10 +691,10 @@ export function ManualEntry() {
                 {manualTags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-md"
+                    className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs px-2.5 py-1 rounded-md"
                   >
                     {tag}
-                    <button onClick={() => removeManualTag(tag)} className="hover:text-slate-900 transition-colors">
+                    <button onClick={() => removeManualTag(tag)} className="hover:text-slate-900 dark:hover:text-white transition-colors">
                       &times;
                     </button>
                   </span>
@@ -702,11 +702,11 @@ export function ManualEntry() {
               </div>
             </div>
           </div>
-            <div className="pt-4 mt-6 border-t border-slate-100 flex items-center justify-between gap-3 w-full overflow-hidden">
+            <div className="pt-4 mt-6 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-3 w-full overflow-hidden">
           <button
             onClick={handlePrevious}
             disabled={currentQuestionNo === 1}
-            className="shrink-0 px-4 py-2.5 text-sm bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 px-4 py-2.5 text-sm bg-white dark:bg-[#252b3b] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -714,14 +714,14 @@ export function ManualEntry() {
           {currentQuestionId ? (
             <button
               onClick={handleUpdateQuestion}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm bg-[#003fb1] text-white hover:bg-blue-800 font-semibold rounded-lg transition-colors shadow-sm truncate"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm bg-[#003fb1] dark:bg-blue-600 text-white hover:bg-blue-800 dark:hover:bg-blue-700 font-semibold rounded-lg transition-colors shadow-sm truncate"
             >
               Update (Q{String(currentQuestionNo).padStart(2, '0')})
             </button>
           ) : (
             <button
               onClick={handleAddQuestion}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm bg-white border border-dashed border-[#003fb1] text-[#003fb1] hover:bg-blue-50 font-semibold rounded-lg transition-colors truncate"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm bg-white dark:bg-[#252b3b] border border-dashed border-[#003fb1] dark:border-blue-500 text-[#003fb1] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-semibold rounded-lg transition-colors truncate"
             >
               <PlusCircle className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">Add to Bank (Q{String(currentQuestionNo).padStart(2, '0')})</span>
@@ -731,7 +731,7 @@ export function ManualEntry() {
           <button
             onClick={handleNext}
             disabled={currentQuestionNo === parseInt(totalQuestions || '0', 10) || currentQuestionNo === questionsCount + 1}
-            className="shrink-0 px-4 py-2.5 text-sm bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 px-4 py-2.5 text-sm bg-white dark:bg-[#252b3b] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>

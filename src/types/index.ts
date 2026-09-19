@@ -1,4 +1,4 @@
-export type ViewType = 'dashboard' | 'papers' | 'upload_pdf' | 'manual_entry' | 'variant_gen' | 'variant_pdf' | 'verification' | 'add-resource' | 'review';
+export type ViewType = 'dashboard' | 'papers' | 'students' | 'upload_pdf' | 'manual_entry' | 'variant_gen' | 'variant_pdf' | 'verification' | 'add-resource' | 'review' | 'registration' | 'application';
 export type DashboardMode = 'system' | 'teacher';
 export type DocumentStatus = 'AI-PROCESSED' | 'MANUALLY-VERIFIED' | 'PENDING';
 
