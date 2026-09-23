@@ -172,17 +172,17 @@ export function UploadPdf() {
   return (
     <div className="space-y-6 flex-1 w-full h-full flex flex-col">
       {/* Back & Title Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-700/60 pb-4">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/dashboard')}
-            className="p-1 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="font-sans font-bold text-2xl text-slate-900 tracking-tight">Upload Question Paper (PDF)</h2>
-            <p className="text-xs text-slate-500">Extract mathematical formulas and structure with AI.</p>
+            <h2 className="font-sans font-bold text-2xl text-slate-900 dark:text-white tracking-tight">Upload Question Paper (PDF)</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Extract mathematical formulas and structure with AI.</p>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export function UploadPdf() {
               navigate('/dashboard');
               addToast('Draft uploaded saved successfully', 'info');
             }}
-            className="px-4 py-2 border border-slate-200 bg-white text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#252b3b] text-slate-600 dark:text-slate-300 text-xs font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-[#2d3446] transition-colors"
           >
             Save Draft
           </button>
@@ -203,7 +203,7 @@ export function UploadPdf() {
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${
               uploadedFile && !isExtracting
                 ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
             }`}
           >
             <UploadCloud className="w-4 h-4" />
@@ -215,8 +215,8 @@ export function UploadPdf() {
             disabled={!uploadedFile || isExtracting}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${
               uploadedFile && !isExtracting
-                ? 'bg-[#003fb1] hover:bg-[#002f85] text-white'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                ? 'bg-[#003fb1] dark:bg-blue-600 hover:bg-[#002f85] dark:hover:bg-blue-700 text-white'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
             }`}
           >
             {isExtracting ? (
@@ -238,9 +238,9 @@ export function UploadPdf() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Upload Container (Spans 2 columns on large) */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <p className="font-semibold text-sm text-slate-800 mb-1">Select Paper</p>
-            <p className="text-xs text-slate-400 mb-6">
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-1">Select Paper</p>
+            <p className="text-xs text-slate-400 dark:text-slate-400 mb-6">
               Ensure the PDF is clear and legible for optimal OCR parsing of sub-scripts and graphs.
             </p>
 
@@ -257,24 +257,24 @@ export function UploadPdf() {
             {!uploadedFile ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#c3c5d7] rounded-lg bg-slate-50/50 p-8 flex flex-col items-center justify-center min-h-[250px] cursor-pointer hover:bg-blue-50/20 hover:border-[#003fb1] transition-all duration-300 group"
+                className="border-2 border-dashed border-[#c3c5d7] dark:border-slate-700 rounded-lg bg-slate-50/50 dark:bg-[#1e2330] p-8 flex flex-col items-center justify-center min-h-[250px] cursor-pointer hover:bg-blue-50/20 dark:hover:bg-blue-950/20 hover:border-[#003fb1] dark:hover:border-blue-500 transition-all duration-300 group"
               >
-                <UploadCloud className="w-12 h-12 text-slate-400 group-hover:text-[#003fb1] mb-2 transition-colors" />
-                <p className="font-semibold text-sm text-slate-700">Drag & drop your question PDF here</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  or <span className="text-[#003fb1] font-bold underline">browse files</span>
+                <UploadCloud className="w-12 h-12 text-slate-400 dark:text-slate-500 group-hover:text-[#003fb1] dark:group-hover:text-blue-400 mb-2 transition-colors" />
+                <p className="font-semibold text-sm text-slate-700 dark:text-slate-200">Drag & drop your question PDF here</p>
+                <p className="text-xs text-slate-400 dark:text-slate-400 mt-1">
+                  or <span className="text-[#003fb1] dark:text-blue-400 font-bold underline">browse files</span>
                 </p>
-                <p className="text-[10px] text-slate-400 mt-4">Maximum size: 50MB</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-4">Maximum size: 50MB</p>
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-lg p-6 bg-blue-50/30 flex items-center justify-between">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-6 bg-blue-50/30 dark:bg-blue-950/30 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded bg-red-100 flex items-center justify-center font-bold text-red-600 text-sm">
+                  <div className="w-12 h-12 rounded bg-red-100 dark:bg-red-950/60 flex items-center justify-center font-bold text-red-600 dark:text-red-400 text-sm">
                     PDF
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{uploadedFile.name}</p>
-                    <p className="text-xs text-[#434654]">{uploadedFile.size}</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{uploadedFile.name}</p>
+                    <p className="text-xs text-[#434654] dark:text-slate-400">{uploadedFile.size}</p>
                   </div>
                 </div>
                 <button
@@ -284,7 +284,7 @@ export function UploadPdf() {
                     if (fileInputRef.current) fileInputRef.current.value = '';
                     addToast('Removed file', 'warning');
                   }}
-                  className="p-1 hover:bg-rose-100 hover:text-rose-700 rounded transition-colors text-slate-400"
+                  className="p-1 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-700 dark:hover:text-rose-400 rounded transition-colors text-slate-400"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -293,25 +293,25 @@ export function UploadPdf() {
           </div>
 
           {/* Simulated Processing Steps */}
-          <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm">
-            <p className="font-semibold text-sm text-slate-800 mb-4">Processing Preview</p>
+          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
+            <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-4">Processing Preview</p>
 
             {isExtracting ? (
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#003fb1] font-medium">Decomposing page layout & OCR indexing...</span>
-                  <span className="font-semibold text-slate-700">{extractionProgress}%</span>
+                  <span className="text-[#003fb1] dark:text-blue-400 font-medium">Decomposing page layout & OCR indexing...</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{extractionProgress}%</span>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                  <div className="bg-[#003fb1] h-1.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
+                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
+                  <div className="bg-[#003fb1] dark:bg-blue-500 h-1.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 p-4 rounded-lg text-slate-500">
+              <div className="flex items-center gap-3 bg-slate-50 dark:bg-[#1e2330] border border-slate-100 dark:border-slate-700/60 p-4 rounded-lg text-slate-500 dark:text-slate-400">
                 <Clock className="w-5 h-5" />
                 <div>
-                  <p className="text-xs font-semibold">No file processing yet</p>
-                  <p className="text-[11px] text-slate-400">Trigger AI Extraction to view live progress preview logs.</p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">No file processing yet</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-400">Trigger AI Extraction to view live progress preview logs.</p>
                 </div>
               </div>
             )}
@@ -319,11 +319,11 @@ export function UploadPdf() {
         </div>
 
         {/* Right Side Metadata Configuration */}
-        <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 shadow-sm h-fit space-y-4">
-          <h3 className="font-semibold text-sm text-slate-800 border-b border-slate-100 pb-3 mb-4">Paper Metadata</h3>
+        <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm h-fit space-y-4 transition-colors">
+          <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700/60 pb-3 mb-4">Paper Metadata</h3>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
               Paper Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -331,27 +331,27 @@ export function UploadPdf() {
               placeholder="e.g., JEE Advanced 2024 Paper 1"
               value={paperName}
               onChange={(e) => setPaperName(e.target.value)}
-              className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+              className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
               Exam Code <span className="text-red-500">*</span>
             </label>
             <select
               value={pdfSubject}
               onChange={(e) => setPdfSubject(e.target.value)}
-              className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+              className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
             >
-              <option>Select Code</option>
-              <option>JEE</option>
-              <option>NEET</option>
+              <option className="dark:bg-[#1a1e29]">Select Code</option>
+              <option className="dark:bg-[#1a1e29]">JEE</option>
+              <option className="dark:bg-[#1a1e29]">NEET</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
               Year And Shift / Institute <span className="text-red-500">*</span>
             </label>
             <input
@@ -359,14 +359,12 @@ export function UploadPdf() {
               placeholder="e.g., 22 Jan 2025 shift-2 / ExamSimula"
               value={pdfExamCode}
               onChange={(e) => setPdfExamCode(e.target.value)}
-              className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+              className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
             />
           </div>
 
-
-
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
               Total Expected Questions
             </label>
             <input
@@ -374,42 +372,42 @@ export function UploadPdf() {
               placeholder="e.g., 40"
               value={expectedQuestions}
               onChange={(e) => setExpectedQuestions(e.target.value)}
-              className="w-full bg-white border border-[#c3c5d7] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#003fb1] focus:ring-1 focus:ring-[#003fb1]"
+              className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
             />
           </div>
 
-          <div className="pt-4 border-t border-slate-100">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-700/60">
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-3">
               Processing Mode
             </label>
             <div className="space-y-3">
-              <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${processingMode === 'standard' ? 'border-[#003fb1] bg-blue-50/30' : 'border-[#c3c5d7] hover:bg-slate-50'}`}>
+              <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${processingMode === 'standard' ? 'border-[#003fb1] dark:border-blue-500 bg-blue-50/30 dark:bg-blue-950/40' : 'border-[#c3c5d7] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}>
                 <input
                   type="radio"
                   name="processingMode"
                   value="standard"
                   checked={processingMode === 'standard'}
                   onChange={() => setProcessingMode('standard')}
-                  className="mt-0.5 text-[#003fb1] focus:ring-[#003fb1]"
+                  className="mt-0.5 text-[#003fb1] dark:text-blue-500 bg-white dark:bg-[#1a1e29] border-slate-300 dark:border-slate-600 accent-[#003fb1] dark:accent-blue-500 focus:ring-[#003fb1] dark:focus:ring-blue-500 cursor-pointer"
                 />
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">Standard Import</div>
-                  <div className="text-xs text-slate-500 mt-0.5">Extract questions for manual review.</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Standard Import</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Extract questions for manual review.</div>
                 </div>
               </label>
 
-              <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${processingMode === 'variant' ? 'border-purple-600 bg-purple-50/30' : 'border-[#c3c5d7] hover:bg-slate-50'}`}>
+              <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${processingMode === 'variant' ? 'border-purple-600 dark:border-purple-500 bg-purple-50/30 dark:bg-purple-950/40' : 'border-[#c3c5d7] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}>
                 <input
                   type="radio"
                   name="processingMode"
                   value="variant"
                   checked={processingMode === 'variant'}
                   onChange={() => setProcessingMode('variant')}
-                  className="mt-0.5 text-purple-600 focus:ring-purple-600"
+                  className="mt-0.5 text-purple-600 dark:text-purple-400 bg-white dark:bg-[#1a1e29] border-slate-300 dark:border-slate-600 accent-purple-600 dark:accent-purple-500 focus:ring-purple-600 cursor-pointer"
                 />
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">AI Variant Generation</div>
-                  <div className="text-xs text-slate-500 mt-0.5">Extract questions and automatically generate new variants.</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">AI Variant Generation</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Extract questions and automatically generate new variants.</div>
                 </div>
               </label>
             </div>
@@ -418,22 +416,22 @@ export function UploadPdf() {
       </div>
 
       {/* Workflow Pipeline Progress Indicator */}
-      <div className="bg-white border border-[#c3c5d7] rounded-xl p-6 md:p-8 shadow-sm mt-6">
-        <h3 className="font-semibold text-base text-slate-900 mb-6">Academic Processing Pipeline Overview</h3>
+      <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 md:p-8 shadow-sm mt-6 transition-colors">
+        <h3 className="font-semibold text-base text-slate-900 dark:text-white mb-6">Academic Processing Pipeline Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
           {/* Connective background line on desktop */}
-          <div className="hidden md:block absolute top-6 left-12 right-12 h-0.5 bg-slate-100 z-0" />
+          <div className="hidden md:block absolute top-6 left-12 right-12 h-0.5 bg-slate-100 dark:bg-slate-700 z-0" />
 
           {/* Stage 1 */}
           <div
             className="relative z-10 flex flex-col items-center text-center group cursor-help"
             onClick={() => addToast('Ingestion: Automated file parsing & layout decomposition.', 'info')}
           >
-            <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-600 flex items-center justify-center mb-2 group-hover:border-[#003fb1] group-hover:bg-blue-50 group-hover:text-[#003fb1] transition-all">
+            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#1e2330] border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:border-[#003fb1] dark:group-hover:border-blue-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/60 group-hover:text-[#003fb1] dark:group-hover:text-blue-400 transition-all">
               <UploadCloud className="w-5 h-5" />
             </div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">1. Ingestion</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Uploaded securely to parsing staging area</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">1. Ingestion</h4>
+            <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Uploaded securely to parsing staging area</p>
           </div>
 
           {/* Stage 2 */}
@@ -441,11 +439,11 @@ export function UploadPdf() {
             className="relative z-10 flex flex-col items-center text-center group cursor-help"
             onClick={() => addToast('Extraction: Deep OCR transforms math equations & diagrams.', 'info')}
           >
-            <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-600 flex items-center justify-center mb-2 group-hover:border-purple-600 group-hover:bg-purple-50 group-hover:text-purple-600 transition-all">
+            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#1e2330] border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:border-purple-600 dark:group-hover:border-purple-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-950/60 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all">
               <Sliders className="w-5 h-5" />
             </div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">2. Extraction</h4>
-            <p className="text-[11px] text-slate-400 mt-1">AI parses structural math formulas</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">2. Extraction</h4>
+            <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">AI parses structural math formulas</p>
           </div>
 
           {/* Stage 3 */}
@@ -453,11 +451,11 @@ export function UploadPdf() {
             className="relative z-10 flex flex-col items-center text-center group cursor-help"
             onClick={() => addToast('Verification: Interactive side-by-side math review.', 'info')}
           >
-            <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-600 flex items-center justify-center mb-2 group-hover:border-teal-600 group-hover:bg-teal-50 group-hover:text-teal-600 transition-all">
+            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#1e2330] border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:border-teal-600 dark:group-hover:border-teal-500 group-hover:bg-teal-50 dark:group-hover:bg-teal-950/60 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-all">
               <FileCheck2 className="w-5 h-5" />
             </div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">3. Verification</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Manual review of parsed text vs PDF</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">3. Verification</h4>
+            <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Manual review of parsed text vs PDF</p>
           </div>
 
           {/* Stage 4 */}
@@ -465,11 +463,11 @@ export function UploadPdf() {
             className="relative z-10 flex flex-col items-center text-center group cursor-help"
             onClick={() => addToast('Commit: Questions saved to global repositories.', 'info')}
           >
-            <div className="w-12 h-12 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-600 flex items-center justify-center mb-2 group-hover:border-[#003fb1] group-hover:bg-[#003fb1] group-hover:text-white transition-all">
+            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#1e2330] border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:border-[#003fb1] dark:group-hover:border-blue-500 group-hover:bg-[#003fb1] dark:group-hover:bg-blue-600 group-hover:text-white transition-all">
               <Check className="w-5 h-5" />
             </div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">4. Commit</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Saves structured text to database</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">4. Commit</h4>
+            <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1">Saves structured text to database</p>
           </div>
         </div>
       </div>

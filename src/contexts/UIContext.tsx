@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Toast } from '../types';
 
 interface UIContextType {
@@ -13,6 +13,9 @@ interface UIContextType {
   
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -25,6 +28,27 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Dark mode initialized from localStorage or default to false
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode((prev) => !prev);
+  }, []);
 
   const addToast = useCallback((text: string, type: 'success' | 'info' | 'warning' | 'error' = 'success') => {
     const id = Date.now().toString();
@@ -49,7 +73,9 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
         showNotifications,
         setShowNotifications,
         searchQuery,
-        setSearchQuery
+        setSearchQuery,
+        isDarkMode,
+        toggleDarkMode
       }}
     >
       {children}

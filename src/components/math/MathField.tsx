@@ -71,11 +71,11 @@ export const MathField = React.forwardRef<any, MathFieldProps>(
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           onFocus={onFocus}
-          className="w-full min-h-[60px] p-3 text-sm font-mono text-slate-800 bg-transparent border-none focus:outline-none resize-y"
+          className="w-full min-h-[60px] p-3 text-sm font-mono text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 bg-transparent border-none focus:outline-none resize-y"
           placeholder="Type raw LaTeX here... (use $...$ for math mode)"
           rows={2}
         />
-        <div className="pt-2 mt-2 border-t border-slate-100">
+        <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-700/60">
           <LivePreview content={value} onMathEdit={onChange} />
         </div>
       </div>

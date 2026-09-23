@@ -153,16 +153,16 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="bg-[#f8f9fa] border-b border-[#e5e7eb] w-full shrink-0 flex flex-col z-10 shadow-sm sticky top-0">
+    <div className="bg-[#f8f9fa] dark:bg-[#1e2330] border-b border-[#e5e7eb] dark:border-slate-700/70 rounded-xl overflow-hidden w-full shrink-0 flex flex-col z-10 shadow-sm sticky top-0 transition-colors">
       {/* Top Header Row with Tabs */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#e5e7eb] bg-[#f8f9fa]">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[#e5e7eb] dark:border-slate-700/70 bg-[#f8f9fa] dark:bg-[#1e2330]">
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setActiveTab('math')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
               activeTab === 'math' 
-                ? 'bg-white text-[#003fb1] shadow-sm border border-[#e5e7eb]' 
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                ? 'bg-white dark:bg-[#252b3b] text-[#003fb1] dark:text-blue-400 shadow-sm border border-[#e5e7eb] dark:border-slate-700' 
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
             }`}
           >
             <Calculator className="w-4 h-4" /> Mathematics
@@ -171,8 +171,8 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
             onClick={() => setActiveTab('physics')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
               activeTab === 'physics' 
-                ? 'bg-white text-[#8b5cf6] shadow-sm border border-[#e5e7eb]' 
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                ? 'bg-white dark:bg-[#252b3b] text-[#8b5cf6] dark:text-purple-400 shadow-sm border border-[#e5e7eb] dark:border-slate-700' 
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
             }`}
           >
             <Atom className="w-4 h-4" /> Physics
@@ -181,8 +181,8 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
             onClick={() => setActiveTab('chemistry')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
               activeTab === 'chemistry' 
-                ? 'bg-white text-[#10b981] shadow-sm border border-[#e5e7eb]' 
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                ? 'bg-white dark:bg-[#252b3b] text-[#10b981] dark:text-emerald-400 shadow-sm border border-[#e5e7eb] dark:border-slate-700' 
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
             }`}
           >
             <FlaskConical className="w-4 h-4" /> Chemistry
@@ -190,12 +190,12 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#e2e4e9] rounded-md text-slate-600 font-mono text-xs border border-[#d1d5db]">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#e2e4e9] dark:bg-[#1a1e29] rounded-md text-slate-600 dark:text-slate-300 font-mono text-xs border border-[#d1d5db] dark:border-slate-700">
             <span>Editing: {activeField || 'None'}</span>
           </div>
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded hover:bg-slate-200"
+            className="text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
             title={isOpen ? "Collapse Toolbar" : "Expand Toolbar"}
           >
             {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -205,12 +205,12 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
 
       {/* Symbol Palette */}
       {isOpen && (
-        <div className="p-4 bg-white flex-1 overflow-y-auto max-h-[200px]">
+        <div className="p-4 bg-white dark:bg-[#222736] flex-1 overflow-y-auto max-h-[200px] transition-colors">
         {activeTab === 'math' && (
           <div className="flex flex-col gap-4">
             {Object.entries(MATH_SYMBOLS).map(([category, symbols]) => (
               <div key={category} className="flex items-center gap-4">
-                <div className="w-24 shrink-0 text-[10px] font-bold text-slate-400 tracking-wider">
+                <div className="w-24 shrink-0 text-[10px] font-bold text-slate-400 dark:text-slate-400 tracking-wider">
                   {category}
                 </div>
                 <div className="flex flex-wrap gap-1.5 flex-1">
@@ -221,7 +221,7 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
                         e.preventDefault(); // Prevent focus loss!
                         onInsertSymbol(sym.value);
                       }}
-                      className="min-w-[32px] h-8 px-2 flex items-center justify-center bg-white border border-[#e5e7eb] rounded hover:border-[#003fb1] hover:text-[#003fb1] hover:bg-blue-50 transition-colors text-sm font-serif text-slate-700 shadow-sm"
+                      className="min-w-[32px] h-8 px-2 flex items-center justify-center bg-white dark:bg-[#1a1e29] border border-[#e5e7eb] dark:border-slate-700 rounded hover:border-[#003fb1] dark:hover:border-blue-500 hover:text-[#003fb1] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors text-sm font-serif text-slate-700 dark:text-slate-200 shadow-sm"
                       title={sym.value}
                     >
                       {sym.label}
@@ -237,7 +237,7 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
           <div className="flex flex-col gap-4">
             {Object.entries(PHYSICS_SYMBOLS).map(([category, symbols]) => (
               <div key={category} className="flex items-center gap-4">
-                <div className="w-32 shrink-0 text-[10px] font-bold text-slate-400 tracking-wider">
+                <div className="w-32 shrink-0 text-[10px] font-bold text-slate-400 dark:text-slate-400 tracking-wider">
                   {category.replace('_', ' ')}
                 </div>
                 <div className="flex flex-wrap gap-1.5 flex-1">
@@ -248,7 +248,7 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
                         e.preventDefault();
                         onInsertSymbol(sym.value);
                       }}
-                      className="min-w-[32px] h-8 px-2 flex items-center justify-center bg-white border border-[#e5e7eb] rounded hover:border-[#003fb1] hover:text-[#003fb1] hover:bg-blue-50 transition-colors text-sm font-serif text-slate-700 shadow-sm"
+                      className="min-w-[32px] h-8 px-2 flex items-center justify-center bg-white dark:bg-[#1a1e29] border border-[#e5e7eb] dark:border-slate-700 rounded hover:border-[#003fb1] dark:hover:border-blue-500 hover:text-[#003fb1] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors text-sm font-serif text-slate-700 dark:text-slate-200 shadow-sm"
                       title={sym.value}
                     >
                       {sym.label}
@@ -264,7 +264,7 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
           <div className="flex flex-col gap-4">
             {Object.entries(CHEMISTRY_SYMBOLS).map(([category, symbols]) => (
               <div key={category} className="flex items-center gap-4">
-                <div className="w-32 shrink-0 text-[10px] font-bold text-slate-400 tracking-wider">
+                <div className="w-32 shrink-0 text-[10px] font-bold text-slate-400 dark:text-slate-400 tracking-wider">
                   {category.replace('_', ' ')}
                 </div>
                 <div className="flex flex-wrap gap-1.5 flex-1">
@@ -275,7 +275,7 @@ export function MathToolbar({ activeField, onInsertSymbol }: MathToolbarProps) {
                         e.preventDefault();
                         onInsertSymbol(sym.value);
                       }}
-                      className="min-w-[32px] h-8 px-2 flex items-center justify-center bg-white border border-[#e5e7eb] rounded hover:border-[#003fb1] hover:text-[#003fb1] hover:bg-blue-50 transition-colors text-sm font-serif text-slate-700 shadow-sm"
+                      className="min-w-[32px] h-8 px-2 flex items-center justify-center bg-white dark:bg-[#1a1e29] border border-[#e5e7eb] dark:border-slate-700 rounded hover:border-[#003fb1] dark:hover:border-blue-500 hover:text-[#003fb1] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors text-sm font-serif text-slate-700 dark:text-slate-200 shadow-sm"
                       title={sym.value}
                     >
                       {sym.label}

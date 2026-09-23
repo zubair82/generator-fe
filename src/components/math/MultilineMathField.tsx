@@ -100,7 +100,7 @@ export const MultilineMathField = React.forwardRef<any, MultilineMathFieldProps>
     return (
       <div className="flex flex-col gap-2">
         {lines.map((line, i) => (
-          <div key={i} className="group relative flex-1 bg-white border border-slate-200 rounded-lg focus-within:border-[#003fb1] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all p-3 pr-10">
+          <div key={i} className="group relative flex-1 bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700/70 rounded-lg focus-within:border-[#003fb1] dark:focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all p-3 pr-10">
             <MathField
               ref={(el: any) => fieldRefs.current[i] = el}
               value={line}
@@ -112,7 +112,7 @@ export const MultilineMathField = React.forwardRef<any, MultilineMathFieldProps>
                 type="button"
                 onClick={() => handleMoveLineUp(i)}
                 title="Move block up"
-                className="p-1 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                className="p-1 text-slate-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-950/50"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
               </button>
@@ -120,7 +120,7 @@ export const MultilineMathField = React.forwardRef<any, MultilineMathFieldProps>
                 type="button"
                 onClick={() => handleMoveLineDown(i)}
                 title="Move block down"
-                className="p-1 text-slate-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                className="p-1 text-slate-400 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded hover:bg-blue-50 dark:hover:bg-blue-950/50"
               >
                 <ArrowDown className="w-3.5 h-3.5" />
               </button>
@@ -128,7 +128,7 @@ export const MultilineMathField = React.forwardRef<any, MultilineMathFieldProps>
                 type="button"
                 onClick={() => handleDeleteLine(i)}
                 title="Delete block"
-                className="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-red-50"
+                className="p-1 text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-950/50"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -139,7 +139,7 @@ export const MultilineMathField = React.forwardRef<any, MultilineMathFieldProps>
           <button
             type="button"
             onClick={() => handleInsertLine(lines.length)}
-            className="text-xs font-semibold text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 border border-transparent hover:border-blue-200"
+            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-50 dark:bg-[#1a1e29] hover:bg-blue-50 dark:hover:bg-blue-950/40 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1 border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
           >
             <Plus className="w-3 h-3" /> Add block (for diagrams/text)
           </button>

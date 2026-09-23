@@ -97,7 +97,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ content, diagramsText,
   return (
     <div className="relative group/preview" ref={containerRef}>
       {isContentEmpty ? (
-        <div className="text-slate-400 italic bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm min-h-[42px] flex items-center justify-between">
+        <div className="text-slate-400 dark:text-slate-400 font-medium italic bg-slate-50 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700/70 rounded-lg p-3 text-sm min-h-[42px] flex items-center justify-between transition-colors">
           <span>Empty</span>
           {onMathEdit && (
             <button 
@@ -105,7 +105,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ content, diagramsText,
                 e.stopPropagation();
                 setEditingMath({ index: -1, latex: '', top: 35, left: 10 });
               }}
-              className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 font-semibold shadow-sm transition-colors"
+              className="text-xs bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 px-2 py-1 rounded hover:bg-purple-200 dark:hover:bg-purple-900 font-semibold shadow-sm transition-colors border border-transparent dark:border-purple-800/60"
             >
               + Insert Math
             </button>
@@ -114,7 +114,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ content, diagramsText,
       ) : (
         <div
           onClick={handleContainerClick}
-          className={`relative bg-slate-50 border border-slate-200 rounded-lg p-3 min-h-[42px] font-serif text-slate-800 text-lg leading-relaxed shadow-inner overflow-x-auto overflow-y-hidden ${onMathEdit ? 'hover:border-purple-300 transition-colors' : ''}`}
+          className={`relative bg-slate-50 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700/70 rounded-lg p-3 min-h-[42px] font-serif text-slate-800 dark:text-slate-100 text-lg leading-relaxed shadow-inner overflow-x-auto overflow-y-hidden transition-colors ${onMathEdit ? 'hover:border-purple-300 dark:hover:border-purple-500' : ''}`}
         >
           <div dangerouslySetInnerHTML={{ __html: renderPreviewHtml(content, diagramsText) }} />
           
@@ -124,7 +124,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ content, diagramsText,
                 e.stopPropagation();
                 setEditingMath({ index: -1, latex: '', top: 35, left: 10 });
               }}
-              className="absolute top-2 right-2 opacity-0 group-hover/preview:opacity-100 transition-opacity text-xs bg-purple-100 text-purple-700 px-2 py-1.5 rounded-md hover:bg-purple-200 shadow-sm font-semibold border border-purple-200"
+              className="absolute top-2 right-2 opacity-0 group-hover/preview:opacity-100 transition-opacity text-xs bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 px-2 py-1.5 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900 shadow-sm font-semibold border border-purple-200 dark:border-purple-800"
               title="Insert new Math Equation"
             >
               + Insert Math
@@ -135,22 +135,22 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ content, diagramsText,
       
       {editingMath && (
         <div 
-          className="mathlive-popover absolute z-50 bg-white border-2 border-purple-400 rounded-xl shadow-2xl p-4 w-[500px] max-w-[90vw] animate-in fade-in zoom-in duration-200"
+          className="mathlive-popover absolute z-50 bg-white dark:bg-[#252b3b] border-2 border-purple-400 dark:border-purple-500 rounded-xl shadow-2xl p-4 w-[500px] max-w-[90vw] animate-in fade-in zoom-in duration-200"
           style={{ top: `${editingMath.top}px`, left: `${editingMath.left}px` }}
         >
-          <div className="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
-            <h4 className="text-xs font-bold text-purple-700 uppercase tracking-wider">
+          <div className="flex justify-between items-center mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+            <h4 className="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
               {editingMath.index === -1 ? 'Insert Math' : 'Visual Math Editor'}
             </h4>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-400 dark:text-slate-400">
               {editingMath.index === -1 ? 'Type equation and hit enter' : 'Click elements to edit'}
             </span>
           </div>
           
-          <div className="mb-4 bg-slate-50 rounded-lg p-1 border border-slate-200">
+          <div className="mb-4 bg-slate-50 dark:bg-[#1a1e29] rounded-lg p-1 border border-slate-200 dark:border-slate-700">
             {React.createElement('math-field', {
               ref: mathFieldRef,
-              style: { width: '100%', fontSize: '1.2em', padding: '12px', background: 'transparent', border: 'none', outline: 'none' },
+              style: { width: '100%', fontSize: '1.2em', padding: '12px', background: 'transparent', border: 'none', outline: 'none', color: 'inherit' },
               'virtual-keyboard-mode': 'manual',
               onKeyDown: (e: KeyboardEvent) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -167,13 +167,13 @@ export const LivePreview: React.FC<LivePreviewProps> = ({ content, diagramsText,
           <div className="flex justify-end gap-2">
             <button 
               onClick={() => setEditingMath(null)}
-              className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button 
               onClick={handleSave}
-              className="px-4 py-1.5 text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 shadow-sm rounded-lg transition-colors"
+              className="px-4 py-1.5 text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-sm rounded-lg transition-colors"
             >
               {editingMath.index === -1 ? 'Insert' : 'Save Changes'}
             </button>
