@@ -477,6 +477,7 @@ export function Verification() {
                         <option value="mathematics" className="dark:bg-[#1a1e29]">Mathematics</option>
                         <option value="physics" className="dark:bg-[#1a1e29]">Physics</option>
                         <option value="chemistry" className="dark:bg-[#1a1e29]">Chemistry</option>
+                        <option value="biology" className="dark:bg-[#1a1e29]">Biology</option>
                       </select>
                     </div>
                     <div>
