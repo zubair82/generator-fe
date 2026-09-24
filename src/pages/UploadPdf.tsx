@@ -12,6 +12,10 @@ export function UploadPdf() {
   const [actualFile, setActualFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploaded, setIsUploaded] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [pdfSubject, setPdfSubject] = useState('Select Subject');
@@ -28,26 +32,28 @@ export function UploadPdf() {
         name: file.name,
         size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
       });
+      setIsUploaded(false);
+      setUploadProgress(0);
       // Pre-fill paper name from file name if empty
       if (!paperName) {
         setPaperName(file.name.replace(/\.pdf$/i, ''));
       }
-      addToast('File selected successfully!', 'success');
+      addToast('File selected! Click "Upload PDF" to proceed.', 'info');
     }
   };
 
   const handleUpload = async () => {
     if (!actualFile) {
-      addToast('Please select or upload a PDF first.', 'warning');
+      addToast('Please select a PDF file first.', 'warning');
       return;
     }
-    setIsExtracting(true);
-    setExtractionProgress(10);
+    setIsUploading(true);
+    setUploadProgress(10);
     
     // Simulate progress while uploading
     const interval = setInterval(() => {
-      setExtractionProgress(prev => prev < 90 ? prev + 5 : prev);
-    }, 500);
+      setUploadProgress(prev => prev < 90 ? prev + 15 : prev);
+    }, 300);
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -67,18 +73,25 @@ export function UploadPdf() {
       }
       
       clearInterval(interval);
-      setExtractionProgress(100);
-      addToast('PDF Uploaded successfully!', 'success');
-    } catch (err) {
+      setUploadProgress(100);
+      setIsUploaded(true);
+      addToast('PDF uploaded successfully! You can now start AI Extraction.', 'success');
+    } catch (err: any) {
       console.error(err);
       clearInterval(interval);
-      addToast('Failed to upload PDF', 'error');
+      setIsUploaded(false);
+      addToast(err.message || 'Failed to upload PDF', 'error');
     } finally {
-      setIsExtracting(false);
+      setIsUploading(false);
     }
   };
 
   const handleAIExtraction = async () => {
+    if (!isUploaded) {
+      addToast('Please upload the PDF before starting AI extraction.', 'warning');
+      return;
+    }
+
     if (!pdfSubject || pdfSubject === 'Select Code' || pdfSubject === 'Select Subject') {
       addToast('Please select an Exam Code before extracting.', 'warning');
       return;
@@ -157,9 +170,8 @@ export function UploadPdf() {
       setExtractionProgress(100);
       addToast('AI Extraction completed successfully!', 'success');
       
-      if (processingMode === 'variant') {
-        navigate(`/variant_gen?paper=${encodeURIComponent(finalPaperName)}&state=PENDING`);
-      }
+      // Redirect to /papers page
+      navigate('/papers');
     } catch (err: any) {
       console.error(err);
       clearInterval(interval);
@@ -199,22 +211,38 @@ export function UploadPdf() {
           
           <button
             onClick={handleUpload}
-            disabled={!uploadedFile || isExtracting}
+            disabled={!actualFile || isUploading || isExtracting}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${
-              uploadedFile && !isExtracting
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              actualFile && !isUploading && !isExtracting
+                ? isUploaded
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
             }`}
           >
-            <UploadCloud className="w-4 h-4" />
-            Upload PDF
+            {isUploading ? (
+              <>
+                <RotateCw className="w-4 h-4 animate-spin" />
+                Uploading ({uploadProgress}%)
+              </>
+            ) : isUploaded ? (
+              <>
+                <Check className="w-4 h-4" />
+                Uploaded
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-4 h-4" />
+                Upload PDF
+              </>
+            )}
           </button>
           
           <button
             onClick={handleAIExtraction}
-            disabled={!uploadedFile || isExtracting}
+            disabled={!isUploaded || isExtracting || isUploading}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${
-              uploadedFile && !isExtracting
+              isUploaded && !isExtracting && !isUploading
                 ? 'bg-[#003fb1] dark:bg-blue-600 hover:bg-[#002f85] dark:hover:bg-blue-700 text-white'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
             }`}
@@ -274,13 +302,24 @@ export function UploadPdf() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{uploadedFile.name}</p>
-                    <p className="text-xs text-[#434654] dark:text-slate-400">{uploadedFile.size}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-[#434654] dark:text-slate-400">{uploadedFile.size}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${
+                        isUploaded 
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' 
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                      }`}>
+                        {isUploaded ? '✓ Uploaded to Server' : 'Selected (Ready to Upload)'}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <button
                   onClick={() => {
                     setUploadedFile(null);
                     setActualFile(null);
+                    setIsUploaded(false);
+                    setUploadProgress(0);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                     addToast('Removed file', 'warning');
                   }}
@@ -296,22 +335,38 @@ export function UploadPdf() {
           <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
             <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-4">Processing Preview</p>
 
-            {isExtracting ? (
+            {isUploading ? (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Uploading PDF to server...</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
+                  <div className="bg-emerald-600 dark:bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                </div>
+              </div>
+            ) : isExtracting ? (
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-[#003fb1] dark:text-blue-400 font-medium">Decomposing page layout & OCR indexing...</span>
                   <span className="font-semibold text-slate-700 dark:text-slate-300">{extractionProgress}%</span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
-                  <div className="bg-[#003fb1] dark:bg-blue-500 h-1.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
+                  <div className="bg-[#003fb1] dark:bg-blue-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${extractionProgress}%` }}></div>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-3 bg-slate-50 dark:bg-[#1e2330] border border-slate-100 dark:border-slate-700/60 p-4 rounded-lg text-slate-500 dark:text-slate-400">
                 <Clock className="w-5 h-5" />
                 <div>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">No file processing yet</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-400">Trigger AI Extraction to view live progress preview logs.</p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isUploaded ? 'PDF Uploaded — Ready for AI Extraction' : 'No file processing yet'}
+                  </p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-400">
+                    {isUploaded 
+                      ? 'Click "Start AI Extraction" above to parse questions.' 
+                      : 'Select a PDF and click "Upload PDF" to stage it for extraction.'}
+                  </p>
                 </div>
               </div>
             )}
