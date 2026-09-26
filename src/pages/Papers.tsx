@@ -102,8 +102,8 @@ export function Papers() {
   // Quick Edit Modal State
   const [editingPaper, setEditingPaper] = useState<ExamPaperItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editPrice, setEditPrice] = useState<number>(150);
-  const [editDuration, setEditDuration] = useState<number>(180);
+  const [editPrice, setEditPrice] = useState<number | string>(150);
+  const [editDuration, setEditDuration] = useState<number | string>(180);
   const [editIsActive, setEditIsActive] = useState<boolean>(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -289,14 +289,17 @@ export function Papers() {
 
       // 1. Update paper duration, price, total_questions on backend
       const totalQ = editingPaper.total_questions ?? editingPaper.questions_count ?? 90;
+      const finalPrice = Math.max(0, typeof editPrice === 'string' ? (editPrice === '' ? 0 : parseFloat(editPrice) || 0) : editPrice);
+      const finalDuration = Math.max(1, typeof editDuration === 'string' ? (editDuration === '' ? 180 : parseInt(editDuration, 10) || 180) : editDuration);
+
       await fetch(
         `${apiUrl}/api/update-exam-paper/${encodeURIComponent(editingPaper.paper_name)}`,
         {
           method: 'PUT',
           headers,
           body: JSON.stringify({
-            duration: Number(editDuration),
-            price: Number(editPrice),
+            duration: finalDuration,
+            price: finalPrice,
             total_questions: totalQ
           })
         }
@@ -320,9 +323,9 @@ export function Papers() {
             ? {
                 ...p,
                 display_title: editTitle,
-                price: Number(editPrice),
-                duration: Number(editDuration),
-                duration_mins: Number(editDuration),
+                price: finalPrice,
+                duration: finalDuration,
+                duration_mins: finalDuration,
                 is_active: editIsActive
               }
             : p
@@ -1038,10 +1041,18 @@ export function Papers() {
                       <input
                         type="number"
                         min="0"
-                        step="10"
+                        step="any"
                         required
                         value={editPrice}
-                        onChange={e => setEditPrice(Math.max(0, parseInt(e.target.value) || 0))}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setEditPrice('');
+                          } else {
+                            const num = parseFloat(val);
+                            setEditPrice(isNaN(num) ? '' : Math.max(0, num));
+                          }
+                        }}
                         className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-[#1a1e29] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#003fb1] dark:focus:ring-blue-500 font-bold"
                       />
                     </div>
@@ -1053,11 +1064,19 @@ export function Papers() {
                     </label>
                     <input
                       type="number"
-                      min="15"
-                      step="15"
+                      min="1"
+                      step="1"
                       required
                       value={editDuration}
-                      onChange={e => setEditDuration(Math.max(15, parseInt(e.target.value) || 180))}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setEditDuration('');
+                        } else {
+                          const num = parseInt(val, 10);
+                          setEditDuration(isNaN(num) ? '' : Math.max(1, num));
+                        }
+                      }}
                       className="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-[#1a1e29] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#003fb1] dark:focus:ring-blue-500 font-bold"
                     />
                   </div>
