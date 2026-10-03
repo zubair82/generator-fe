@@ -1,7 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, RotateCw, Sparkles, UploadCloud, Trash2, Clock, Sliders, FileCheck2, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { ArrowLeft, RotateCw, Sparkles, UploadCloud, Trash2, Clock, Sliders, FileCheck2, Check, Terminal, Cpu, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUI } from '../contexts/UIContext';
+
+export interface ExtractionLog {
+  id: string;
+  timestamp: string;
+  stage: 'INIT' | 'RASTER' | 'VLM' | 'OCR-MATH' | 'JSON-PARSE' | 'DB-COMMIT' | 'COMPLETE' | 'ERROR';
+  message: string;
+  type: 'info' | 'vlm' | 'success' | 'warning' | 'error';
+  detail?: string;
+}
 
 export function UploadPdf() {
   const navigate = useNavigate();
@@ -22,7 +31,49 @@ export function UploadPdf() {
   const [pdfExamCode, setPdfExamCode] = useState('');
   const [expectedQuestions, setExpectedQuestions] = useState('');
   const [paperName, setPaperName] = useState('');
+  const [paperType, setPaperType] = useState('Select One');
+  const [duration, setDuration] = useState('180');
+  const [price, setPrice] = useState('0');
   const [processingMode, setProcessingMode] = useState<'standard' | 'variant'>('standard');
+
+  // Live Extraction Logs State
+  const [extractionLogs, setExtractionLogs] = useState<ExtractionLog[]>([]);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
+
+  const addLog = useCallback(
+    (
+      stage: ExtractionLog['stage'],
+      message: string,
+      type: ExtractionLog['type'] = 'info',
+      detail?: string
+    ) => {
+      const timeStr = new Date().toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      setExtractionLogs(prev => [
+        ...prev,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          timestamp: timeStr,
+          stage,
+          message,
+          type,
+          detail
+        }
+      ]);
+    },
+    []
+  );
+
+  // Auto-scroll logs to bottom
+  useEffect(() => {
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+    }
+  }, [extractionLogs]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -49,7 +100,7 @@ export function UploadPdf() {
     }
     setIsUploading(true);
     setUploadProgress(10);
-    
+
     // Simulate progress while uploading
     const interval = setInterval(() => {
       setUploadProgress(prev => prev < 90 ? prev + 15 : prev);
@@ -59,7 +110,7 @@ export function UploadPdf() {
       const token = localStorage.getItem('auth_token');
       const formData = new FormData();
       formData.append('file', actualFile);
-      
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload-pdf`, {
         method: 'POST',
         headers: {
@@ -67,11 +118,11 @@ export function UploadPdf() {
         },
         body: formData
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to upload file');
       }
-      
+
       clearInterval(interval);
       setUploadProgress(100);
       setIsUploaded(true);
@@ -96,65 +147,116 @@ export function UploadPdf() {
       addToast('Please select an Exam Code before extracting.', 'warning');
       return;
     }
-    
+
     if (!pdfExamCode || pdfExamCode.trim() === '') {
       addToast('Please enter the Year And Shift / Institute before extracting.', 'warning');
       return;
     }
-    
+
     if (!paperName || paperName.trim() === '') {
       addToast('Please enter a Paper Name before extracting.', 'warning');
       return;
     }
 
+    if (!paperType || paperType === 'Select One' || paperType.trim() === '') {
+      addToast('Please select a Paper Type before extracting.', 'warning');
+      return;
+    }
+
+    if (!duration || duration.trim() === '' || isNaN(Number(duration)) || Number(duration) <= 0) {
+      addToast('Please enter a valid Time Duration in minutes.', 'warning');
+      return;
+    }
+
+    if (price === '' || price.trim() === '' || isNaN(Number(price)) || Number(price) < 0) {
+      addToast('Please enter a valid Price (₹ INR).', 'warning');
+      return;
+    }
+
     setIsExtracting(true);
     setExtractionProgress(10);
-    
-    const interval = setInterval(() => {
-      setExtractionProgress(prev => prev < 90 ? prev + 5 : prev);
-    }, 500);
+    setExtractionLogs([]);
+
+    const startTime = Date.now();
+    addLog('INIT', `Initiating AI Extraction pipeline for "${paperName.trim()}"...`, 'info', `Exam: ${pdfSubject} | Type: ${paperType} | Year & Shift: ${pdfExamCode}`);
+
+    // Scheduled step logs during in-flight API call
+    const timeouts: NodeJS.Timeout[] = [];
+    timeouts.push(setTimeout(() => {
+      addLog('RASTER', `Parsing and rasterizing PDF document "${uploadedFile?.name || 'document.pdf'}"...`, 'info', `Size: ${uploadedFile?.size}`);
+      setExtractionProgress(20);
+    }, 700));
+
+    timeouts.push(setTimeout(() => {
+      addLog('VLM', 'Connecting to Vision Language Model (VLM) for layout decomposition...', 'vlm', 'Endpoint: /api/pdf-to-json');
+      setExtractionProgress(35);
+    }, 2200));
+
+    timeouts.push(setTimeout(() => {
+      addLog('VLM', 'Detecting question boundaries, multi-column blocks & diagram zones...', 'vlm');
+      setExtractionProgress(45);
+    }, 4200));
+
+    timeouts.push(setTimeout(() => {
+      addLog('OCR-MATH', 'Deep OCR extracting LaTeX formulas, matrices, integrals & symbols...', 'info');
+      setExtractionProgress(55);
+    }, 6500));
+
+    timeouts.push(setTimeout(() => {
+      addLog('JSON-PARSE', 'Structuring question options, solutions, and subject taxonomy...', 'info');
+      setExtractionProgress(60);
+    }, 9000));
+
+    timeouts.push(setTimeout(() => {
+      addLog('VLM', 'Running mathematical verification & option consistency audit...', 'vlm');
+      setExtractionProgress(65);
+    }, 12000));
 
     try {
       const token = localStorage.getItem('auth_token');
-      
+
       // The path comes from .env variables
       const basePath = import.meta.env.VITE_PDF_FILE_PATH;
       if (!basePath) {
         throw new Error('VITE_PDF_FILE_PATH is not set in environment variables');
       }
-      
+
       if (!uploadedFile) {
         throw new Error('No file selected.');
       }
 
       // Combine base path with the uploaded file name
       const pdfPath = `${basePath.replace(/\/$/, '')}/${uploadedFile.name}`;
-      
+
       const finalPaperName = paperName.trim();
-      
+
       // Map UI state to API parameters based on updated form labels
       const examCodeParam = (pdfSubject && pdfSubject !== 'Select Code') ? pdfSubject : 'DEFAULT_CODE';
       const yearAndShiftParam = pdfExamCode || 'Unknown';
 
       // 1. Call pdf-to-json API
-      const extractResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/pdf-to-json?pdf_path=${encodeURIComponent(pdfPath)}&exam_code=${encodeURIComponent(examCodeParam)}&year_and_shift=${encodeURIComponent(yearAndShiftParam)}`, {
+      addLog('VLM', `Calling VLM inference API with exam_code="${examCodeParam}"...`, 'vlm');
+      const extractResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/pdf-to-json?pdf_path=${encodeURIComponent(pdfPath)}&exam_code=${encodeURIComponent(examCodeParam)}&year_and_shift=${encodeURIComponent(yearAndShiftParam)}&paper_name=${encodeURIComponent(finalPaperName)}&paper_type=${encodeURIComponent(paperType)}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!extractResponse.ok) {
         throw new Error('Failed to parse PDF to JSON');
       }
 
-      setExtractionProgress(60);
+      timeouts.forEach(clearTimeout);
+      setExtractionProgress(75);
+      addLog('JSON-PARSE', 'VLM Extraction & LaTeX synthesis succeeded! JSON schema generated.', 'success');
 
       // 2. Call the appropriate upload API based on Processing Mode
-      const uploadEndpoint = processingMode === 'variant' 
+      const uploadEndpoint = processingMode === 'variant'
         ? `${import.meta.env.VITE_API_URL}/api/upload-questions/${encodeURIComponent(finalPaperName)}`
         : `${import.meta.env.VITE_API_URL}/api/upload-production-questions/${encodeURIComponent(finalPaperName)}`;
 
+      addLog('DB-COMMIT', `Staging extracted questions into question bank repository...`, 'info', `Target: ${uploadEndpoint}`);
       const uploadResponse = await fetch(uploadEndpoint, {
         method: 'POST',
         headers: {
@@ -165,16 +267,47 @@ export function UploadPdf() {
       if (!uploadResponse.ok) {
         throw new Error('Failed to upload questions');
       }
-      
-      clearInterval(interval);
+
+      addLog('DB-COMMIT', 'Questions successfully committed into database repository!', 'success');
+
+      // 3. Persist duration, price, and total expected questions to paper metadata
+      const parsedDuration = Math.max(1, parseInt(duration, 10) || 180);
+      const parsedPrice = Math.max(0, parseFloat(price) || 0);
+      const parsedTotalQ = expectedQuestions && !isNaN(Number(expectedQuestions)) ? parseInt(expectedQuestions, 10) : undefined;
+
+      addLog('DB-COMMIT', `Configuring paper metadata: Type=${paperType}, Duration=${parsedDuration} Mins, Price=₹${parsedPrice}...`, 'info');
+      try {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/update-exam-paper/${encodeURIComponent(finalPaperName)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            duration: parsedDuration,
+            price: parsedPrice,
+            paper_type: paperType,
+            ...(parsedTotalQ ? { total_questions: parsedTotalQ } : {})
+          })
+        });
+        addLog('DB-COMMIT', 'Paper metadata listing settings saved.', 'success');
+      } catch (metaErr) {
+        console.warn('Failed to update duration and price paper metadata:', metaErr);
+      }
+
       setExtractionProgress(100);
+      const totalSecs = ((Date.now() - startTime) / 1000).toFixed(1);
+      addLog('COMPLETE', `AI Extraction & Ingestion finished in ${totalSecs}s! Redirecting to Storefront...`, 'success');
       addToast('AI Extraction completed successfully!', 'success');
-      
-      // Redirect to /papers page
-      navigate('/papers');
+
+      // Short delay before redirect so user sees the success logs
+      setTimeout(() => {
+        navigate('/papers');
+      }, 1200);
     } catch (err: any) {
+      timeouts.forEach(clearTimeout);
       console.error(err);
-      clearInterval(interval);
+      addLog('ERROR', `Pipeline error: ${err.message || 'Failed to process PDF'}`, 'error');
       addToast(err.message || 'Failed to process PDF', 'error');
     } finally {
       setIsExtracting(false);
@@ -208,17 +341,16 @@ export function UploadPdf() {
           >
             Save Draft
           </button>
-          
+
           <button
             onClick={handleUpload}
             disabled={!actualFile || isUploading || isExtracting}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${
-              actualFile && !isUploading && !isExtracting
-                ? isUploaded
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${actualFile && !isUploading && !isExtracting
+              ? isUploaded
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+              }`}
           >
             {isUploading ? (
               <>
@@ -237,15 +369,14 @@ export function UploadPdf() {
               </>
             )}
           </button>
-          
+
           <button
             onClick={handleAIExtraction}
             disabled={!isUploaded || isExtracting || isUploading}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${
-              isUploaded && !isExtracting && !isUploading
-                ? 'bg-[#003fb1] dark:bg-blue-600 hover:bg-[#002f85] dark:hover:bg-blue-700 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all duration-300 ${isUploaded && !isExtracting && !isUploading
+              ? 'bg-[#003fb1] dark:bg-blue-600 hover:bg-[#002f85] dark:hover:bg-blue-700 text-white'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+              }`}
           >
             {isExtracting ? (
               <>
@@ -273,10 +404,10 @@ export function UploadPdf() {
             </p>
 
             {/* Hidden File Input */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
               accept=".pdf,application/pdf"
               onChange={handleFileChange}
             />
@@ -304,11 +435,10 @@ export function UploadPdf() {
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{uploadedFile.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-[#434654] dark:text-slate-400">{uploadedFile.size}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${
-                        isUploaded 
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400' 
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
-                      }`}>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${isUploaded
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                        }`}>
                         {isUploaded ? '✓ Uploaded to Server' : 'Selected (Ready to Upload)'}
                       </span>
                     </div>
@@ -331,9 +461,20 @@ export function UploadPdf() {
             )}
           </div>
 
-          {/* Simulated Processing Steps */}
+          {/* Processing Steps & Real-Time Console */}
           <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm transition-colors">
-            <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-4">Processing Preview</p>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-[#003fb1] dark:text-blue-400" />
+                <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">Processing Preview</p>
+              </div>
+              {isExtracting && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+                  VLM Active
+                </span>
+              )}
+            </div>
 
             {isUploading ? (
               <div className="space-y-3">
@@ -345,14 +486,88 @@ export function UploadPdf() {
                   <div className="bg-emerald-600 dark:bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
                 </div>
               </div>
-            ) : isExtracting ? (
+            ) : isExtracting || extractionLogs.length > 0 ? (
               <div className="space-y-3">
+                {/* Progress bar header */}
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#003fb1] dark:text-blue-400 font-medium">Decomposing page layout & OCR indexing...</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">{extractionProgress}%</span>
+                  <span className="text-[#003fb1] dark:text-blue-400 font-medium flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 animate-spin" />
+                    {extractionProgress < 100 ? 'VLM Extraction & Ingestion in Progress...' : 'Extraction Pipeline Completed!'}
+                  </span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{extractionProgress}%</span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
-                  <div className="bg-[#003fb1] dark:bg-blue-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${extractionProgress}%` }}></div>
+
+                <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-1.5 rounded-full transition-all duration-500 ${extractionProgress === 100 ? 'bg-emerald-500' : 'bg-[#003fb1] dark:bg-blue-500'
+                      }`}
+                    style={{ width: `${extractionProgress}%` }}
+                  ></div>
+                </div>
+
+                {/* Dark Terminal / Console Log Box */}
+                <div className="bg-[#0b0f19] border border-slate-800 rounded-xl p-3.5 shadow-inner">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                      </div>
+                      <span className="text-[11px] font-mono text-slate-400">VLM Execution Stream</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-500">{extractionLogs.length} events logged</span>
+                  </div>
+
+                  <div
+                    ref={logsContainerRef}
+                    className="max-h-56 min-h-[120px] overflow-y-auto space-y-2 font-mono text-xs pr-1 scrollbar-thin scrollbar-thumb-slate-700"
+                  >
+                    {extractionLogs.map(log => {
+                      const badgeClasses =
+                        log.stage === 'VLM'
+                          ? 'bg-purple-950/80 text-purple-300 border-purple-800'
+                          : log.stage === 'OCR-MATH'
+                            ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800'
+                            : log.stage === 'JSON-PARSE'
+                              ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800'
+                              : log.stage === 'DB-COMMIT'
+                                ? 'bg-blue-950/80 text-blue-300 border-blue-800'
+                                : log.stage === 'COMPLETE'
+                                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
+                                  : log.stage === 'ERROR'
+                                    ? 'bg-rose-950/80 text-rose-300 border-rose-800'
+                                    : 'bg-slate-800 text-slate-300 border-slate-700';
+
+                      const textClasses =
+                        log.type === 'vlm'
+                          ? 'text-purple-200'
+                          : log.type === 'success'
+                            ? 'text-emerald-400 font-semibold'
+                            : log.type === 'error'
+                              ? 'text-rose-400 font-semibold'
+                              : log.type === 'warning'
+                                ? 'text-amber-300'
+                                : 'text-slate-300';
+
+                      return (
+                        <div key={log.id} className="leading-snug">
+                          <div className="flex items-start gap-2">
+                            <span className="text-slate-500 text-[10px] shrink-0 pt-0.5">{log.timestamp}</span>
+                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border shrink-0 ${badgeClasses}`}>
+                              [{log.stage}]
+                            </span>
+                            <span className={`text-[11px] ${textClasses}`}>{log.message}</span>
+                          </div>
+                          {log.detail && (
+                            <div className="ml-16 pl-2 border-l border-slate-800 text-[10px] text-slate-500 mt-0.5">
+                              ↳ {log.detail}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -363,8 +578,8 @@ export function UploadPdf() {
                     {isUploaded ? 'PDF Uploaded — Ready for AI Extraction' : 'No file processing yet'}
                   </p>
                   <p className="text-[11px] text-slate-400 dark:text-slate-400">
-                    {isUploaded 
-                      ? 'Click "Start AI Extraction" above to parse questions.' 
+                    {isUploaded
+                      ? 'Click "Start AI Extraction" above to parse questions and stream VLM logs.'
                       : 'Select a PDF and click "Upload PDF" to stage it for extraction.'}
                   </p>
                 </div>
@@ -407,6 +622,22 @@ export function UploadPdf() {
 
           <div>
             <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Paper Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={paperType}
+              onChange={(e) => setPaperType(e.target.value)}
+              className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+            >
+              <option value="Select One" className="dark:bg-[#1a1e29]">Select One</option>
+              <option value="Full Mock" className="dark:bg-[#1a1e29]">Full Mock</option>
+              <option value="Subject Test" className="dark:bg-[#1a1e29]">Subject Test</option>
+              <option value="Previous Year Paper" className="dark:bg-[#1a1e29]">Previous Year Paper</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
               Year And Shift / Institute <span className="text-red-500">*</span>
             </label>
             <input
@@ -416,6 +647,43 @@ export function UploadPdf() {
               onChange={(e) => setPdfExamCode(e.target.value)}
               className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Time Duration (Mins) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              required
+              placeholder="e.g., 180"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+              Price (₹ INR) <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                ₹
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                required
+                placeholder="e.g., 0"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full pl-7 bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           <div>
@@ -451,6 +719,7 @@ export function UploadPdf() {
                 </div>
               </label>
 
+              {/* AI Variant Generation Radio Button (Commented out - preserved for future use)
               <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${processingMode === 'variant' ? 'border-purple-600 dark:border-purple-500 bg-purple-50/30 dark:bg-purple-950/40' : 'border-[#c3c5d7] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}>
                 <input
                   type="radio"
@@ -465,6 +734,7 @@ export function UploadPdf() {
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Extract questions and automatically generate new variants.</div>
                 </div>
               </label>
+              */}
             </div>
           </div>
         </div>

@@ -33,6 +33,7 @@ interface ExamPaperItem {
   paper_name: string;
   display_title?: string;
   exam_code: string;
+  paper_type?: string;
   created_at: string | null;
   state: string;
   type?: string;
@@ -48,7 +49,7 @@ interface ExamPaperItem {
   revenue_formatted?: string;
 }
 
-type SortField = 'title' | 'category' | 'price' | 'attempts' | 'revenue' | 'date' | 'status';
+type SortField = 'title' | 'category' | 'paper_type' | 'price' | 'attempts' | 'revenue' | 'date' | 'status';
 type SortDirection = 'asc' | 'desc';
 type TabFilter = 'ALL' | 'ACTIVE' | 'REVIEW' | 'DRAFTS';
 
@@ -99,10 +100,15 @@ export function Papers() {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
   // Quick Edit Modal State
   const [editingPaper, setEditingPaper] = useState<ExamPaperItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
-  const [editPrice, setEditPrice] = useState<number | string>(150);
+  const [editPaperType, setEditPaperType] = useState<string>('Full Mock');
+  const [editPrice, setEditPrice] = useState<number | string>(0);
   const [editDuration, setEditDuration] = useState<number | string>(180);
   const [editIsActive, setEditIsActive] = useState<boolean>(false);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -176,7 +182,7 @@ export function Papers() {
               ? Number(paper.price)
               : perf?.price !== undefined && perf?.price !== null
               ? Number(perf.price)
-              : 150;
+              : 0;
 
           // Priority: paper.duration / duration_mins from DB -> perf.duration -> fallback based on questions count
           const resolvedDuration =
@@ -221,6 +227,7 @@ export function Papers() {
       setSortField(field);
       setSortDirection('desc');
     }
+    setCurrentPage(1);
   };
 
   // Toggle Active Status
@@ -261,6 +268,7 @@ export function Papers() {
   const openQuickEdit = (paper: ExamPaperItem) => {
     setEditingPaper(paper);
     setEditTitle(paper.display_title || formatPaperTitle(paper.paper_name));
+    setEditPaperType(paper.paper_type || 'Full Mock');
     setEditPrice(paper.price !== undefined && paper.price !== null ? Number(paper.price) : 150);
     setEditDuration(
       paper.duration !== undefined && paper.duration !== null
@@ -300,6 +308,7 @@ export function Papers() {
           body: JSON.stringify({
             duration: finalDuration,
             price: finalPrice,
+            paper_type: editPaperType,
             total_questions: totalQ
           })
         }
@@ -323,6 +332,7 @@ export function Papers() {
             ? {
                 ...p,
                 display_title: editTitle,
+                paper_type: editPaperType,
                 price: finalPrice,
                 duration: finalDuration,
                 duration_mins: finalDuration,
@@ -345,11 +355,6 @@ export function Papers() {
   // Filtered & Sorted Papers
   const processedPapers = useMemo(() => {
     let result = apiPapers.filter(paper => {
-      // Hide original completed papers if needed
-      if (paper.type === 'Original' && (paper.state || '').toUpperCase() === 'COMPLETED') {
-        return false;
-      }
-
       // Tab filter
       const stateNorm = (paper.state || '').toUpperCase().replace(/_/g, '-');
       if (activeTab === 'ACTIVE') {
@@ -385,6 +390,9 @@ export function Papers() {
         case 'category':
           comparison = (a.exam_code || '').localeCompare(b.exam_code || '');
           break;
+        case 'paper_type':
+          comparison = (a.paper_type || 'Full Mock').localeCompare(b.paper_type || 'Full Mock');
+          break;
         case 'price':
           comparison = (a.price || 0) - (b.price || 0);
           break;
@@ -408,6 +416,25 @@ export function Papers() {
 
     return result;
   }, [apiPapers, activeTab, searchQuery, sortField, sortDirection]);
+
+  // Pagination calculations
+  const totalFilteredPapers = processedPapers.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredPapers / pageSize));
+
+  // Auto-clamp page if it exceeds totalPages
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedPapers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return processedPapers.slice(start, start + pageSize);
+  }, [processedPapers, currentPage, pageSize]);
+
+  const startItemIndex = totalFilteredPapers === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItemIndex = Math.min(currentPage * pageSize, totalFilteredPapers);
 
   // Overall Storefront Metrics
   const totalPapersCount = apiPapers.length;
@@ -507,6 +534,7 @@ export function Papers() {
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id);
+                setCurrentPage(1);
                 addToast(`Filtered by ${tab.label}`, 'info');
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
@@ -526,13 +554,19 @@ export function Papers() {
           <input
             type="text"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search papers by title or exam..."
             className="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003fb1] dark:focus:ring-blue-500 transition-all"
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => {
+                setSearchQuery('');
+                setCurrentPage(1);
+              }}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
             >
               <X className="w-3.5 h-3.5" />
@@ -549,8 +583,8 @@ export function Papers() {
           <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Storefront Catalog Table
           </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            Showing {processedPapers.length} of {apiPapers.length} items
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Showing <strong className="text-slate-800 dark:text-slate-200">{startItemIndex}{startItemIndex !== endItemIndex ? `-${endItemIndex}` : ''}</strong> of <strong className="text-slate-800 dark:text-slate-200">{totalFilteredPapers}</strong> items
           </span>
         </div>
 
@@ -588,7 +622,22 @@ export function Papers() {
                   </div>
                 </th>
 
-                {/* 3. Price */}
+                {/* 3. Paper Type */}
+                <th
+                  onClick={() => handleSort('paper_type')}
+                  className="p-4 cursor-pointer hover:text-[#003fb1] dark:hover:text-blue-400 transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Paper Type</span>
+                    {sortField === 'paper_type' ? (
+                      sortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5 text-[#003fb1]" /> : <ArrowDown className="w-3.5 h-3.5 text-[#003fb1]" />
+                    ) : (
+                      <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />
+                    )}
+                  </div>
+                </th>
+
+                {/* 4. Price */}
                 <th
                   onClick={() => handleSort('price')}
                   className="p-4 cursor-pointer hover:text-[#003fb1] dark:hover:text-blue-400 transition-colors"
@@ -644,7 +693,7 @@ export function Papers() {
             <tbody className="text-sm divide-y divide-slate-100 dark:divide-slate-700/60">
               {loadingPapers ? (
                 <tr>
-                  <td colSpan={7} className="text-center p-12 text-slate-500 dark:text-slate-400">
+                  <td colSpan={8} className="text-center p-12 text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-7 h-7 border-3 border-[#003fb1] dark:border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                       <p className="text-xs font-semibold">Loading storefront catalog...</p>
@@ -653,7 +702,7 @@ export function Papers() {
                 </tr>
               ) : processedPapers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center p-12 text-slate-500 dark:text-slate-400">
+                  <td colSpan={8} className="text-center p-12 text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
                       <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                       <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No exam papers found</p>
@@ -672,7 +721,7 @@ export function Papers() {
                   </td>
                 </tr>
               ) : (
-                processedPapers.map((paper, idx) => {
+                paginatedPapers.map((paper, idx) => {
                   const stateNorm = (paper.state || '').toUpperCase().replace(/_/g, '-');
                   const totalQ = paper.total_questions || paper.questions_count || 90;
                   const durationM =
@@ -792,7 +841,22 @@ export function Papers() {
                         </span>
                       </td>
 
-                      {/* 3. Price */}
+                      {/* 3. Paper Type */}
+                      <td className="p-4 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-1 rounded-lg font-bold text-xs border ${
+                            (paper.paper_type || '').toLowerCase().includes('subject')
+                              ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/80'
+                              : (paper.paper_type || '').toLowerCase().includes('previous') || (paper.paper_type || '').toLowerCase().includes('pyq')
+                              ? 'bg-teal-50 dark:bg-teal-950/70 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800/80'
+                              : 'bg-sky-50 dark:bg-sky-950/70 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/80'
+                          }`}
+                        >
+                          {paper.paper_type || 'Full Mock'}
+                        </span>
+                      </td>
+
+                      {/* 4. Price */}
                       <td className="p-4 whitespace-nowrap">
                         <button
                           onClick={() => openQuickEdit(paper)}
@@ -962,12 +1026,76 @@ export function Papers() {
           </table>
         </div>
 
-        {/* Table Footer / Summary */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-700/70 flex justify-between items-center bg-slate-50/30 dark:bg-[#1e2330]">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Showing {processedPapers.length} active documents
-          </span>
-          <div className="flex gap-2">
+        {/* Table Footer with Pagination Controls */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-700/70 bg-slate-50/30 dark:bg-[#1e2330] flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Showing <strong className="text-slate-800 dark:text-slate-200">{startItemIndex}</strong> to <strong className="text-slate-800 dark:text-slate-200">{endItemIndex}</strong> of <strong className="text-slate-800 dark:text-slate-200">{totalFilteredPapers}</strong> papers
+            </span>
+
+            {/* Rows Per Page Selector */}
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-medium">
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={e => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500 cursor-pointer"
+              >
+                <option value={5}>5</option>
+                <option value={7}>7</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Page Navigation Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#252b3b] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-semibold"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Prev</span>
+                </button>
+
+                {Array.from({ length: totalPages }).map((_, idx) => {
+                  const page = idx + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page
+                          ? 'bg-[#003fb1] dark:bg-blue-600 text-white shadow-sm'
+                          : 'bg-white dark:bg-[#252b3b] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#252b3b] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-semibold"
+                  title="Next Page"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             <button
               onClick={() => navigate('/upload_pdf')}
               className="text-xs font-bold text-[#003fb1] dark:text-blue-400 hover:underline flex items-center gap-1"
@@ -1028,7 +1156,23 @@ export function Papers() {
                   </p>
                 </div>
 
-                {/* 2. Listing Price & Time Limit (Grid) */}
+                {/* 2. Paper Type */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
+                    Paper Type
+                  </label>
+                  <select
+                    value={editPaperType}
+                    onChange={e => setEditPaperType(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-[#1a1e29] border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#003fb1] dark:focus:ring-blue-500 font-semibold"
+                  >
+                    <option value="Full Mock">Full Mock</option>
+                    <option value="Subject Test">Subject Test</option>
+                    <option value="Previous Year Paper">Previous Year Paper</option>
+                  </select>
+                </div>
+
+                {/* 3. Listing Price & Time Limit (Grid) */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
