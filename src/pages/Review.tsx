@@ -21,6 +21,7 @@ export function Review() {
   const [tag, setTag] = useState('');
   const [status, setStatus] = useState('Sandbox-Verified');
   const [examCode, setExamCode] = useState('');
+  const [estimatedTime, setEstimatedTime] = useState('');
   const [questionType, setQuestionType] = useState('mcq');
   const [questionText, setQuestionText] = useState('');
   const [optionA, setOptionA] = useState('');
@@ -34,6 +35,17 @@ export function Review() {
   
   const [loading, setLoading] = useState(true);
   const [previewMode, setPreviewMode] = useState(true);
+  const [metadataTab, setMetadataTab] = useState<'question' | 'paper'>('question');
+
+  // Paper Metadata state
+  const [paperMetaName, setPaperMetaName] = useState('');
+  const [paperExamCode, setPaperExamCode] = useState('Select Code');
+  const [paperType, setPaperType] = useState('Select One');
+  const [paperYearAndShift, setPaperYearAndShift] = useState('');
+  const [paperDuration, setPaperDuration] = useState('180');
+  const [paperPrice, setPaperPrice] = useState('0');
+  const [paperTotalQuestions, setPaperTotalQuestions] = useState('');
+  const [isUpdatingPaper, setIsUpdatingPaper] = useState(false);
   
   const [activeFieldId, setActiveFieldId] = useState<string | null>(null);
   const [activeLineIndex, setActiveLineIndex] = useState<number>(0);
@@ -67,6 +79,7 @@ export function Review() {
     setTag(pQ.tag || '');
     setStatus(pQ.state || 'Sandbox-Verified');
     setExamCode(pQ.exam_code || '');
+    setEstimatedTime(pQ.estimated_time_seconds !== undefined && pQ.estimated_time_seconds !== null ? String(pQ.estimated_time_seconds) : '');
     setQuestionType(pQ.question_type || 'mcq');
     
     setQuestionText(pQ.question_latex || '');
@@ -93,11 +106,11 @@ export function Review() {
       const token = localStorage.getItem('auth_token');
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
-      const prodRes = await fetch(`${import.meta.env.VITE_API_URL}/api/production-questions/by-state?paper_name=${encodeURIComponent(paper)}&state=Sandbox-Verified,Sandbox-Skipped,Reviewed,Completed`, { headers });
+      const prodRes = await fetch(`${import.meta.env.VITE_API_URL}/api/production-questions/by-state?paper_name=${encodeURIComponent(paper)}&state=Reviewed,Sandbox-Verified,Sandbox-Skipped`, { headers });
       
       if (prodRes.status === 404) {
         addToast('No more questions to review for this paper.', 'success');
-        navigate('/dashboard');
+        navigate('/papers');
         return;
       }
       if (!prodRes.ok) throw new Error('Failed to fetch next production question');
@@ -138,9 +151,86 @@ export function Review() {
     }
   };
 
+  const fetchPaperMetadata = async () => {
+    if (!paper) return;
+    try {
+      const token = localStorage.getItem('auth_token');
+      const basePaperName = paper.replace('_varient', '').replace('_variant', '');
+      let res = await fetch(`${import.meta.env.VITE_API_URL}/api/exam-paper/${encodeURIComponent(paper)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok && basePaperName !== paper) {
+        res = await fetch(`${import.meta.env.VITE_API_URL}/api/exam-paper/${encodeURIComponent(basePaperName)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.exam_paper) {
+          const ep = data.exam_paper;
+          setPaperMetaName(ep.paper_name || paper);
+          setPaperExamCode(ep.exam_code || 'Select Code');
+          setPaperType(ep.paper_type || 'Select One');
+          setPaperYearAndShift(ep.year_and_shift || '');
+          setPaperDuration(ep.duration !== undefined && ep.duration !== null ? String(ep.duration) : '180');
+          setPaperPrice(ep.price !== undefined && ep.price !== null ? String(ep.price) : '0');
+          setPaperTotalQuestions(ep.total_questions !== undefined && ep.total_questions !== null ? String(ep.total_questions) : '');
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch paper metadata:', err);
+    }
+  };
+
+  const handleUpdatePaperMetadata = async () => {
+    if (!paper) return;
+    setIsUpdatingPaper(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const parsedDuration = Math.max(1, parseInt(paperDuration, 10) || 180);
+      const parsedPrice = Math.max(0, parseFloat(paperPrice) || 0);
+      const parsedTotalQ = paperTotalQuestions && !isNaN(Number(paperTotalQuestions)) ? parseInt(paperTotalQuestions, 10) : undefined;
+
+      const payload: any = {
+        duration: parsedDuration,
+        price: parsedPrice,
+        paper_type: paperType !== 'Select One' ? paperType : 'Full Mock',
+        exam_code: paperExamCode !== 'Select Code' ? paperExamCode : undefined,
+        year_and_shift: paperYearAndShift || undefined,
+        ...(parsedTotalQ !== undefined ? { total_questions: parsedTotalQ } : {})
+      };
+      if (paperMetaName && paperMetaName.trim() !== paper) {
+        payload.paper_name = paperMetaName.trim();
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/update-exam-paper/${encodeURIComponent(paper)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || 'Failed to update paper metadata');
+      }
+
+      addToast('Paper metadata updated successfully!', 'success');
+      fetchPaperMetadata();
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || 'Error updating paper metadata', 'error');
+    } finally {
+      setIsUpdatingPaper(false);
+    }
+  };
+
   useEffect(() => {
     if (paper) {
       loadNextQuestion();
+      fetchPaperMetadata();
     }
   }, [paper]);
 
@@ -192,6 +282,8 @@ export function Review() {
       const token = localStorage.getItem('auth_token');
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
+      const parsedEstimatedTime = estimatedTime.trim() !== '' && !isNaN(Number(estimatedTime)) ? parseInt(estimatedTime, 10) : null;
+
       const payload = {
         state: 'Completed',
         question_latex: questionText,
@@ -200,7 +292,8 @@ export function Review() {
         explanation: explanation,
         diagrams: diagrams,
         subject: subject,
-        tag: tag
+        tag: tag,
+        estimated_time_seconds: parsedEstimatedTime
       };
       
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/production-questions/${questionId}`, {
@@ -233,7 +326,7 @@ export function Review() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-700/60 pb-4">
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/papers')}
             className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -415,50 +508,211 @@ export function Review() {
          </div>
  
         <div className="space-y-4 lg:h-[calc(100vh-160px)] overflow-y-auto pr-1">
-          <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm space-y-6 transition-colors">
-            <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700/60 pb-3 mb-4">Question Metadata (Q{currentQNo})</h3>
-
-            <div>
-              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Status</label>
-              <div className="p-2 bg-slate-100 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-medium">
-                {status || 'Unknown'}
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Exam Code</label>
-              <div className="p-2 bg-slate-100 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-medium">
-                {examCode || 'Unknown'}
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Subject <span className="text-red-500">*</span></label>
-              <select
-                className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200"
-                value={subject ? subject.toLowerCase() : ''}
-                onChange={(e) => setSubject(e.target.value)}
-              >
-                <option value="" disabled className="dark:bg-[#1a1e29]">Select one</option>
-                <option value="physics" className="dark:bg-[#1a1e29]">Physics</option>
-                <option value="chemistry" className="dark:bg-[#1a1e29]">Chemistry</option>
-                <option value="mathematics" className="dark:bg-[#1a1e29]">Mathematics</option>
-                <option value="biology" className="dark:bg-[#1a1e29]">Biology</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Tag/Topic <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-400"
-                value={tag || ''}
-                onChange={(e) => setTag(e.target.value)}
-                placeholder="e.g. Thermodynamics"
-              />
-            </div>
-
+          {/* Metadata Tab Switcher */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/60">
+            <button
+              type="button"
+              onClick={() => setMetadataTab('question')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                metadataTab === 'question'
+                  ? 'bg-white dark:bg-[#252b3b] text-[#003fb1] dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Question Metadata
+            </button>
+            <button
+              type="button"
+              onClick={() => setMetadataTab('paper')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
+                metadataTab === 'paper'
+                  ? 'bg-white dark:bg-[#252b3b] text-[#003fb1] dark:text-blue-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              Paper Metadata
+            </button>
           </div>
+
+          {metadataTab === 'question' ? (
+            <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm space-y-6 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700/60 pb-3 mb-4">Question Metadata (Q{currentQNo})</h3>
+
+              <div>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Status</label>
+                <div className="p-2 bg-slate-100 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-medium">
+                  {status || 'Unknown'}
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Exam Code</label>
+                <div className="p-2 bg-slate-100 dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-medium">
+                  {examCode || 'Unknown'}
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Subject <span className="text-red-500">*</span></label>
+                <select
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200"
+                  value={subject ? subject.toLowerCase() : ''}
+                  onChange={(e) => setSubject(e.target.value)}
+                >
+                  <option value="" disabled className="dark:bg-[#1a1e29]">Select one</option>
+                  <option value="physics" className="dark:bg-[#1a1e29]">Physics</option>
+                  <option value="chemistry" className="dark:bg-[#1a1e29]">Chemistry</option>
+                  <option value="mathematics" className="dark:bg-[#1a1e29]">Mathematics</option>
+                  <option value="biology" className="dark:bg-[#1a1e29]">Biology</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Tag/Topic <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-400"
+                  value={tag || ''}
+                  onChange={(e) => setTag(e.target.value)}
+                  placeholder="e.g. Thermodynamics"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 block uppercase tracking-wide">Estimated Time (Seconds)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-400"
+                  value={estimatedTime}
+                  onChange={(e) => setEstimatedTime(e.target.value)}
+                  placeholder="e.g. 120"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-[#252b3b] border border-[#c3c5d7] dark:border-slate-700/70 rounded-xl p-6 shadow-sm space-y-4 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-700/60 pb-3 mb-4">Paper Metadata</h3>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Paper Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., JEE Advanced 2024 Paper 1"
+                  value={paperMetaName}
+                  onChange={(e) => setPaperMetaName(e.target.value)}
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Exam Code <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={paperExamCode}
+                  onChange={(e) => setPaperExamCode(e.target.value)}
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                >
+                  <option value="Select Code" className="dark:bg-[#1a1e29]">Select Code</option>
+                  <option value="JEE" className="dark:bg-[#1a1e29]">JEE</option>
+                  <option value="NEET" className="dark:bg-[#1a1e29]">NEET</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Paper Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={paperType}
+                  onChange={(e) => setPaperType(e.target.value)}
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                >
+                  <option value="Select One" className="dark:bg-[#1a1e29]">Select One</option>
+                  <option value="Full Mock" className="dark:bg-[#1a1e29]">Full Mock</option>
+                  <option value="Subject Test" className="dark:bg-[#1a1e29]">Subject Test</option>
+                  <option value="Previous Year Paper" className="dark:bg-[#1a1e29]">Previous Year Paper</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Year And Shift / Institute <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., 22 Jan 2025 shift-2 / ExamSimula"
+                  value={paperYearAndShift}
+                  onChange={(e) => setPaperYearAndShift(e.target.value)}
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Time Duration (Mins) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  placeholder="e.g., 180"
+                  value={paperDuration}
+                  onChange={(e) => setPaperDuration(e.target.value)}
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Price (₹ INR) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    required
+                    placeholder="e.g., 0"
+                    value={paperPrice}
+                    onChange={(e) => setPaperPrice(e.target.value)}
+                    className="w-full pl-7 bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Total Expected Questions
+                </label>
+                <input
+                  type="number"
+                  placeholder="e.g., 40"
+                  value={paperTotalQuestions}
+                  onChange={(e) => setPaperTotalQuestions(e.target.value)}
+                  className="w-full bg-white dark:bg-[#1a1e29] border border-[#c3c5d7] dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-400 focus:outline-none focus:border-[#003fb1] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#003fb1] dark:focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  disabled={isUpdatingPaper}
+                  onClick={handleUpdatePaperMetadata}
+                  className="w-full flex items-center justify-center gap-2 bg-[#003fb1] dark:bg-blue-600 hover:bg-[#002f8a] dark:hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm shadow-sm transition-all disabled:opacity-50"
+                >
+                  {isUpdatingPaper ? 'Updating...' : 'Update'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
