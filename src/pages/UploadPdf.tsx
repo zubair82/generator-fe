@@ -6,7 +6,7 @@ import { useUI } from '../contexts/UIContext';
 export interface ExtractionLog {
   id: string;
   timestamp: string;
-  stage: 'INIT' | 'RASTER' | 'VLM' | 'OCR-MATH' | 'JSON-PARSE' | 'DB-COMMIT' | 'COMPLETE' | 'ERROR';
+  stage: 'INIT' | 'RASTER' | 'VLM' | 'OCR-MATH' | 'JSON-PARSE' | 'DB-COMMIT' | 'COMPLETE' | 'ERROR' | 'INFO' | string;
   message: string;
   type: 'info' | 'vlm' | 'success' | 'warning' | 'error';
   detail?: string;
@@ -180,83 +180,87 @@ export function UploadPdf() {
     const startTime = Date.now();
     addLog('INIT', `Initiating AI Extraction pipeline for "${paperName.trim()}"...`, 'info', `Exam: ${pdfSubject} | Type: ${paperType} | Year & Shift: ${pdfExamCode}`);
 
-    // Scheduled step logs during in-flight API call
-    const timeouts: NodeJS.Timeout[] = [];
-    timeouts.push(setTimeout(() => {
-      addLog('RASTER', `Parsing and rasterizing PDF document "${uploadedFile?.name || 'document.pdf'}"...`, 'info', `Size: ${uploadedFile?.size}`);
-      setExtractionProgress(20);
-    }, 700));
-
-    timeouts.push(setTimeout(() => {
-      addLog('VLM', 'Connecting to Vision Language Model (VLM) for layout decomposition...', 'vlm', 'Endpoint: /api/pdf-to-json');
-      setExtractionProgress(35);
-    }, 2200));
-
-    timeouts.push(setTimeout(() => {
-      addLog('VLM', 'Detecting question boundaries, multi-column blocks & diagram zones...', 'vlm');
-      setExtractionProgress(45);
-    }, 4200));
-
-    timeouts.push(setTimeout(() => {
-      addLog('OCR-MATH', 'Deep OCR extracting LaTeX formulas, matrices, integrals & symbols...', 'info');
-      setExtractionProgress(55);
-    }, 6500));
-
-    timeouts.push(setTimeout(() => {
-      addLog('JSON-PARSE', 'Structuring question options, solutions, and subject taxonomy...', 'info');
-      setExtractionProgress(60);
-    }, 9000));
-
-    timeouts.push(setTimeout(() => {
-      addLog('VLM', 'Running mathematical verification & option consistency audit...', 'vlm');
-      setExtractionProgress(65);
-    }, 12000));
-
     try {
       const token = localStorage.getItem('auth_token');
-
-      // The path comes from .env variables
       const basePath = import.meta.env.VITE_PDF_FILE_PATH;
       if (!basePath) {
-        throw new Error('VITE_PDF_FILE_PATH is not set in environment variables');
+        throw new Error('PDF storage base path not configured.');
       }
-
       if (!uploadedFile) {
         throw new Error('No file selected.');
       }
-
-      // Combine base path with the uploaded file name
       const pdfPath = `${basePath.replace(/\/$/, '')}/${uploadedFile.name}`;
-
       const finalPaperName = paperName.trim();
-
-      // Map UI state to API parameters based on updated form labels
       const examCodeParam = (pdfSubject && pdfSubject !== 'Select Code') ? pdfSubject : 'DEFAULT_CODE';
       const yearAndShiftParam = pdfExamCode || 'Unknown';
 
       // 1. Call pdf-to-json API
-      addLog('VLM', `Calling VLM inference API with exam_code="${examCodeParam}"...`, 'vlm');
-      const extractResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/pdf-to-json?pdf_path=${encodeURIComponent(pdfPath)}&exam_code=${encodeURIComponent(examCodeParam)}&year_and_shift=${encodeURIComponent(yearAndShiftParam)}&paper_name=${encodeURIComponent(finalPaperName)}&paper_type=${encodeURIComponent(paperType)}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
+      addLog('VLM', `Connecting to VLM pipeline for "${finalPaperName}"...`, 'vlm');
+      const extractResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/pdf-to-json?pdf_path=${encodeURIComponent(pdfPath)}&exam_code=${encodeURIComponent(examCodeParam)}&year_and_shift=${encodeURIComponent(yearAndShiftParam)}&paper_name=${encodeURIComponent(finalPaperName)}&paper_type=${encodeURIComponent(paperType)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
-      });
+      );
 
       if (!extractResponse.ok) {
-        throw new Error('Failed to parse PDF to JSON');
+        const errJson = await extractResponse.json().catch(() => ({}));
+        throw new Error(errJson.detail || errJson.error || 'Failed to initiate PDF to JSON extraction');
       }
 
-      timeouts.forEach(clearTimeout);
-      setExtractionProgress(75);
-      addLog('JSON-PARSE', 'VLM Extraction & LaTeX synthesis succeeded! JSON schema generated.', 'success');
+      // 2. Consume the NDJSON Stream until complete
+      const reader = extractResponse.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let isCompleted = false;
 
-      // 2. Call the appropriate upload API based on Processing Mode
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const event = JSON.parse(line);
+              if (event.type === 'log') {
+                if (event.progress) setExtractionProgress(event.progress);
+                addLog(
+                  event.stage || 'VLM',
+                  event.message || '',
+                  event.level === 'error' ? 'error' : event.level === 'warning' ? 'warning' : event.stage === 'VLM' ? 'vlm' : 'info',
+                  event.detail
+                );
+              } else if (event.type === 'complete') {
+                isCompleted = true;
+                setExtractionProgress(100);
+                addLog('JSON-PARSE', `Extraction complete! Extracted ${event.total || 0} questions.`, 'success');
+              } else if (event.type === 'error') {
+                throw new Error(event.detail || 'Extraction failed on server');
+              }
+            } catch (parseErr: any) {
+              if (parseErr.message && !parseErr.message.includes('JSON')) {
+                throw parseErr;
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Call the appropriate upload API ONLY AFTER stream finishes & paper is in DB
       const uploadEndpoint = processingMode === 'variant'
         ? `${import.meta.env.VITE_API_URL}/api/upload-questions/${encodeURIComponent(finalPaperName)}`
         : `${import.meta.env.VITE_API_URL}/api/upload-production-questions/${encodeURIComponent(finalPaperName)}`;
 
-      addLog('DB-COMMIT', `Staging extracted questions into question bank repository...`, 'info', `Target: ${uploadEndpoint}`);
+      addLog('DB-COMMIT', 'Staging extracted questions into question bank repository...', 'info', `Target: ${uploadEndpoint}`);
+
       const uploadResponse = await fetch(uploadEndpoint, {
         method: 'POST',
         headers: {
@@ -265,12 +269,13 @@ export function UploadPdf() {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload questions');
+        const uploadErr = await uploadResponse.json().catch(() => ({}));
+        throw new Error(uploadErr.detail || 'Failed to upload questions to production');
       }
 
       addLog('DB-COMMIT', 'Questions successfully committed into database repository!', 'success');
 
-      // 3. Persist duration, price, and total expected questions to paper metadata
+      // 4. Persist duration, price, and total expected questions
       const parsedDuration = Math.max(1, parseInt(duration, 10) || 180);
       const parsedPrice = Math.max(0, parseFloat(price) || 0);
       const parsedTotalQ = expectedQuestions && !isNaN(Number(expectedQuestions)) ? parseInt(expectedQuestions, 10) : undefined;
@@ -295,17 +300,14 @@ export function UploadPdf() {
         console.warn('Failed to update duration and price paper metadata:', metaErr);
       }
 
-      setExtractionProgress(100);
       const totalSecs = ((Date.now() - startTime) / 1000).toFixed(1);
       addLog('COMPLETE', `AI Extraction & Ingestion finished in ${totalSecs}s! Redirecting to Storefront...`, 'success');
       addToast('AI Extraction completed successfully!', 'success');
 
-      // Short delay before redirect so user sees the success logs
       setTimeout(() => {
         navigate('/papers');
       }, 1200);
     } catch (err: any) {
-      timeouts.forEach(clearTimeout);
       console.error(err);
       addLog('ERROR', `Pipeline error: ${err.message || 'Failed to process PDF'}`, 'error');
       addToast(err.message || 'Failed to process PDF', 'error');
@@ -537,7 +539,9 @@ export function UploadPdf() {
                                   ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
                                   : log.stage === 'ERROR'
                                     ? 'bg-rose-950/80 text-rose-300 border-rose-800'
-                                    : 'bg-slate-800 text-slate-300 border-slate-700';
+                                    : log.stage === 'INFO'
+                                      ? 'bg-sky-950/80 text-sky-300 border-sky-800'
+                                      : 'bg-slate-800 text-slate-300 border-slate-700';
 
                       const textClasses =
                         log.type === 'vlm'
