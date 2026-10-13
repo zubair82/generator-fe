@@ -46,7 +46,11 @@ export function Login() {
           className="bg-white dark:bg-[#252b3b] max-w-md w-full rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-200 dark:border-slate-700/70 p-8 flex flex-col transition-colors"
         >
           <div className="flex flex-col items-center gap-3 mb-8 justify-center">
-            <ExamSimulaLogo size={48} />
+            <ExamSimulaLogo
+              size={48}
+              cutoutStrokeClass="stroke-white dark:stroke-[#252b3b]"
+              cutoutFillClass="fill-white dark:fill-[#252b3b]"
+            />
             <span className="font-sans font-bold text-2xl text-slate-800 dark:text-white tracking-tight">ExamSimula</span>
           </div>
 

@@ -44,7 +44,11 @@ export function Footer({ compact = false }: FooterProps) {
       <footer className="w-full bg-white dark:bg-[#1f2430] border-t border-slate-200 dark:border-slate-800 py-6 px-6 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <ExamSimulaLogo size={20} />
+            <ExamSimulaLogo
+              size={20}
+              cutoutStrokeClass="stroke-white dark:stroke-[#1f2430]"
+              cutoutFillClass="fill-white dark:fill-[#1f2430]"
+            />
             <span className="font-semibold text-slate-700 dark:text-slate-300">ExamSimula</span>
             <span>&copy; {currentYear} All rights reserved.</span>
           </div>
@@ -75,7 +79,11 @@ export function Footer({ compact = false }: FooterProps) {
           {/* Brand & Description */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5 text-white text-xl font-bold tracking-tight">
-              <ExamSimulaLogo size={32} />
+              <ExamSimulaLogo
+                size={32}
+                cutoutStrokeClass="stroke-slate-900 dark:stroke-[#151821]"
+                cutoutFillClass="fill-slate-900 dark:fill-[#151821]"
+              />
               <span>ExamSimula</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">

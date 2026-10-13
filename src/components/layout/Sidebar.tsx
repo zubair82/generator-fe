@@ -36,7 +36,11 @@ export function Sidebar() {
     <aside className="w-full md:w-64 py-2.5 bg-white dark:bg-[#222736] border-r border-[#c3c5d7] dark:border-slate-700/60 flex flex-col p-6 z-40 md:fixed md:top-0 md:left-0 md:h-screen transition-colors">
       {/* Brand Header */}
       <div className="flex items-center gap-2 mb-8 px-2">
-        <ExamSimulaLogo size={32} />
+        <ExamSimulaLogo
+          size={32}
+          cutoutStrokeClass="stroke-white dark:stroke-[#222736]"
+          cutoutFillClass="fill-white dark:fill-[#222736]"
+        />
         <div>
           <h1 className="font-sans font-bold text-lg text-[#003fb1] dark:text-blue-400 leading-none tracking-tight">ExamSimula</h1>
           <p className="text-[10px] font-bold text-[#434654] dark:text-slate-400 uppercase tracking-wider mt-1">

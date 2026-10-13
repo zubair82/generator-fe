@@ -222,7 +222,11 @@ export function Registration() {
         {/* Top Brand Lockup */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-10">
-            <ExamSimulaLogo size={38} />
+            <ExamSimulaLogo
+              size={38}
+              cutoutStrokeClass="stroke-[#003fb1]"
+              cutoutFillClass="fill-[#003fb1]"
+            />
             <div>
               <span className="font-sans font-extrabold text-2xl tracking-tight text-white">ExamSimula</span>
               <span className="block text-[10px] font-bold text-blue-200 tracking-widest uppercase">
