@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import useSWR from 'swr';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
@@ -238,6 +239,62 @@ function normalizeRosterItem(item: ApiRosterItem): StudentRosterItem {
   };
 }
 
+export interface RosterApiResponse {
+  success: boolean;
+  teacher_id?: string;
+  filter_tier?: string;
+  summary?: RosterSummary;
+  tier_counts?: RosterTierCounts;
+  pagination?: RosterPagination;
+  roster?: ApiRosterItem[];
+}
+
+// Stable fetcher for SWR query key: ['roster', tier, search, status, sort, page, pageSize]
+const rosterFetcher = async ([
+  _key,
+  tier,
+  search,
+  status,
+  sort,
+  page,
+  pageSize
+]: readonly [string, string, string, string, string, number, number]) => {
+  const token = localStorage.getItem('auth_token');
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  const queryParams = new URLSearchParams();
+  if (tier !== 'all') {
+    queryParams.set('tier', tier);
+  }
+  if (search) {
+    queryParams.set('search', search);
+  }
+  if (status === 'COMPLETED') {
+    queryParams.set('status', 'completed');
+  } else if (status === 'IN_PROGRESS') {
+    queryParams.set('status', 'in_progress');
+  }
+
+  const sortMap: Record<string, string> = {
+    date_desc: 'latest',
+    date_asc: 'oldest',
+    net_desc: 'revenue_desc',
+    score_desc: 'score_desc'
+  };
+  queryParams.set('sort_by', sortMap[sort] || 'latest');
+  queryParams.set('page', String(page));
+  queryParams.set('page_size', String(pageSize));
+
+  const response = await fetch(`${apiUrl}/api/v1/students/roster?${queryParams.toString()}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
+  if (!response.ok) {
+    throw new Error(`Roster API returned error status: ${response.status}`);
+  }
+  return response.json();
+};
+
 export function Students() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -256,93 +313,73 @@ export function Students() {
       : 'all';
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS'>('ALL');
   const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'net_desc' | 'score_desc'>('date_desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // API State
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [rosterItems, setRosterItems] = useState<StudentRosterItem[]>([]);
-  const [apiSummary, setApiSummary] = useState<RosterSummary | null>(null);
-  const [apiTierCounts, setApiTierCounts] = useState<RosterTierCounts | null>(null);
-  const [apiPagination, setApiPagination] = useState<RosterPagination | null>(null);
-
-  // Fetch from API
-  const fetchRosterData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-
-      const token = localStorage.getItem('auth_token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-      const queryParams = new URLSearchParams();
-      if (activeTier !== 'all') {
-        queryParams.set('tier', activeTier);
-      }
-      if (searchQuery.trim()) {
-        queryParams.set('search', searchQuery.trim());
-      }
-      if (statusFilter === 'COMPLETED') {
-        queryParams.set('status', 'completed');
-      } else if (statusFilter === 'IN_PROGRESS') {
-        queryParams.set('status', 'in_progress');
-      }
-
-      // Sort param mapping
-      const sortMap: Record<string, string> = {
-        date_desc: 'latest',
-        date_asc: 'oldest',
-        net_desc: 'revenue_desc',
-        score_desc: 'score_desc'
-      };
-      queryParams.set('sort_by', sortMap[sortBy] || 'latest');
-      queryParams.set('page', String(currentPage));
-      queryParams.set('page_size', String(itemsPerPage));
-
-      const response = await fetch(`${apiUrl}/api/v1/students/roster?${queryParams.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.roster && Array.isArray(data.roster)) {
-          const mapped = data.roster.map(normalizeRosterItem);
-          setRosterItems(mapped);
-        } else {
-          setRosterItems([]);
-        }
-
-        if (data.summary) {
-          setApiSummary(data.summary);
-        }
-        if (data.tier_counts) {
-          setApiTierCounts(data.tier_counts);
-        }
-        if (data.pagination) {
-          setApiPagination(data.pagination);
-        }
-      } else {
-        console.warn('Roster API returned error status:', response.status);
-        addToast('Failed to fetch student roster from server', 'error');
-      }
-    } catch (err) {
-      console.error('Error fetching student roster:', err);
-      addToast('Network error loading student roster', 'error');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [activeTier, searchQuery, statusFilter, sortBy, currentPage, itemsPerPage, addToast]);
-
-  // Trigger fetch when dependencies change
+  // Debounce search query so fast keystrokes don't flood the network
   useEffect(() => {
-    fetchRosterData();
-  }, [fetchRosterData]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+  // Stable SWR query key: ['roster', activeTier, debouncedSearch, statusFilter, sortBy, currentPage, itemsPerPage]
+  // In-flight requests are automatically deduplicated by SWR across component renders and React StrictMode!
+  const queryKey = token
+    ? (['roster', activeTier, debouncedSearch, statusFilter, sortBy, currentPage, itemsPerPage] as const)
+    : null;
+
+  const {
+    data: rosterData,
+    error: rosterError,
+    isLoading,
+    isValidating,
+    mutate
+  } = useSWR<RosterApiResponse>(
+    queryKey,
+    rosterFetcher,
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 4000,
+      keepPreviousData: true
+    }
+  );
+
+  // Derive roster items directly from the unified roster API payload
+  const rosterItems: StudentRosterItem[] = useMemo(() => {
+    if (rosterData?.roster && Array.isArray(rosterData.roster)) {
+      return rosterData.roster.map(normalizeRosterItem);
+    }
+    return [];
+  }, [rosterData?.roster]);
+
+  // Read summary and tier_counts directly from rosterData (no separate /roster/summary request)
+  const apiSummary: RosterSummary | null = rosterData?.summary || null;
+  const apiTierCounts: RosterTierCounts | null = rosterData?.tier_counts || null;
+  const apiPagination: RosterPagination | null = rosterData?.pagination || null;
+
+  const isInitialLoading = isLoading && !rosterData;
+
+  const handleRefresh = async () => {
+    try {
+      await mutate();
+      addToast('Student roster refreshed', 'info');
+    } catch {
+      addToast('Failed to refresh student roster', 'error');
+    }
+  };
+
+  useEffect(() => {
+    if (rosterError) {
+      addToast(rosterError.message || 'Failed to load student roster', 'error');
+    }
+  }, [rosterError, addToast]);
 
   // Handle tier tab selection
   const handleTabChange = (tier: RevenueTier) => {
@@ -444,12 +481,12 @@ export function Students() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchRosterData(true)}
-            disabled={refreshing || loading}
+            onClick={handleRefresh}
+            disabled={isValidating || isInitialLoading}
             title="Refresh student roster"
             className="p-2.5 bg-white dark:bg-[#252b3b] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl shadow-sm transition-all disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-[#003fb1]' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isValidating ? 'animate-spin text-[#003fb1]' : ''}`} />
           </button>
 
           <button
@@ -694,8 +731,8 @@ export function Students() {
                 <th className="py-3.5 px-5 text-right">Completed Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
-              {loading ? (
+            <tbody className={`divide-y divide-slate-100 dark:divide-slate-700/60 text-xs transition-opacity duration-200 ${isValidating && !isInitialLoading ? 'opacity-70' : 'opacity-100'}`}>
+              {isInitialLoading ? (
                 <tr>
                   <td colSpan={6} className="py-20 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-3">
@@ -877,7 +914,7 @@ export function Students() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1 || loading}
+                disabled={currentPage === 1 || isInitialLoading}
                 className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#252b3b] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -889,7 +926,7 @@ export function Students() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    disabled={loading}
+                    disabled={isInitialLoading}
                     className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
                       currentPage === page
                         ? 'bg-[#003fb1] dark:bg-blue-600 text-white shadow-sm'
@@ -903,7 +940,7 @@ export function Students() {
 
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages || loading}
+                disabled={currentPage === totalPages || isInitialLoading}
                 className="p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#252b3b] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronRight className="w-4 h-4" />
