@@ -163,7 +163,11 @@ interface EarningsSummaryResponse {
       traffic_label?: string;
     };
   };
-  top_papers?: TopPaper[];
+  top_papers?: TopPerformingPaper[];
+  top_performing_papers?: TopPerformingPaper[];
+  live_feed?: LiveFeedItem[];
+  live_student_feed?: LiveFeedItem[];
+  feed?: LiveFeedItem[];
   recent_activities?: StudentActivity[];
 }
 
@@ -218,38 +222,34 @@ export function Dashboard() {
     const authUrl = import.meta.env.VITE_AUTH_URL || 'http://localhost:5001';
     const headers = { Authorization: `Bearer ${token}` };
 
-    // 1. Earnings summary
+    // 1. Unified earnings summary (includes earnings KPIs, attribution matrix, top papers, and live feed)
     fetch(`${apiUrl}/api/v1/earnings/summary`, { headers })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
-        if (data) setEarningsData(data);
+        if (data) {
+          setEarningsData(data);
+
+          // Read top performing papers directly from /summary
+          const papers = data.top_performing_papers || data.top_papers;
+          if (papers && Array.isArray(papers)) {
+            setTopPerformingPapers(papers);
+          }
+
+          // Read live student activity feed directly from /summary
+          const feed = data.live_student_feed || data.live_feed || data.feed;
+          if (feed && Array.isArray(feed)) {
+            setLiveFeedItems(feed);
+          }
+        }
       })
       .catch(err => console.error('Failed to load earnings summary from API:', err))
-      .finally(() => setLoadingEarnings(false));
+      .finally(() => {
+        setLoadingEarnings(false);
+        setLoadingTopPapers(false);
+        setLoadingLiveFeed(false);
+      });
 
-    // 2. Top performing papers
-    fetch(`${apiUrl}/api/v1/earnings/top-papers?limit=5`, { headers })
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (data?.top_performing_papers && Array.isArray(data.top_performing_papers)) {
-          setTopPerformingPapers(data.top_performing_papers);
-        }
-      })
-      .catch(err => console.error('Failed to load top performing papers from API:', err))
-      .finally(() => setLoadingTopPapers(false));
-
-    // 3. Live student feed
-    fetch(`${apiUrl}/api/v1/earnings/live-feed?limit=10`, { headers })
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (data?.feed && Array.isArray(data.feed)) {
-          setLiveFeedItems(data.feed);
-        }
-      })
-      .catch(err => console.error('Failed to load live student feed from API:', err))
-      .finally(() => setLoadingLiveFeed(false));
-
-    // 4. Teacher details / referral code
+    // 2. Teacher details / referral code
     fetch(`${authUrl}/api/v1/teacher/details/me`, { headers })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
@@ -270,13 +270,13 @@ export function Dashboard() {
   };
 
   // Top Performing Papers Data (Live strictly from API)
-  const topPapers: TopPaper[] = topPerformingPapers.map((p, idx) => ({
-    id: String(p.paper_id || idx + 1),
-    name: p.title || p.paper_name || `Exam Paper #${p.paper_id}`,
-    examCode: p.exam_code || 'EXAM',
-    attempts: p.attempts_count || 0,
-    grossRevenue: p.revenue_formatted || formatINR(p.gross_revenue, '₹0'),
-    completionRate: p.completion_label || `${Math.round(p.completion_rate || 0)}%`
+  const topPapers: TopPaper[] = topPerformingPapers.map((p: any, idx) => ({
+    id: String(p.paper_id || p.id || idx + 1),
+    name: p.title || p.paper_name || p.name || `Exam Paper #${p.paper_id || idx + 1}`,
+    examCode: p.exam_code || p.examCode || 'EXAM',
+    attempts: p.attempts_count ?? p.attempts ?? 0,
+    grossRevenue: p.revenue_formatted || (typeof p.grossRevenue === 'string' ? p.grossRevenue : formatINR(p.gross_revenue, '₹0')),
+    completionRate: p.completion_label || (typeof p.completionRate === 'string' ? p.completionRate : `${Math.round(p.completion_rate || 0)}%`)
   }));
 
   return (
@@ -810,19 +810,19 @@ export function Dashboard() {
 
             <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
               {liveFeedItems.length > 0 ? (
-                liveFeedItems.map((act) => {
-                  const initials = act.student_initials || 'S.U.';
-                  const studentName = act.student_name || 'Student';
-                  const actionText = act.action_text || 'completed';
-                  const paperTitle = act.paper_title || act.paper_name || 'Exam Paper';
-                  const tierBadge = act.tier_badge || 'Direct (70%)';
-                  const tierType = act.tier_type || 'direct';
-                  const timeAgo = act.time_ago || 'just now';
+                liveFeedItems.map((act: any, idx) => {
+                  const initials = act.student_initials || act.initials || 'S.U.';
+                  const studentName = act.student_name || act.studentName || 'Student';
+                  const actionText = act.action_text || act.actionText || 'completed';
+                  const paperTitle = act.paper_title || act.paper_name || act.paperName || 'Exam Paper';
+                  const tierBadge = act.tier_badge || act.tierBadge || 'Direct (70%)';
+                  const tierType = act.tier_type || act.tierType || 'direct';
+                  const timeAgo = act.time_ago || act.timeAgo || 'just now';
                   const rawScore = act.score || `${Math.round(act.marks_obtained || 0)}/${Math.round(act.total_marks || 100)}`;
                   const scoreVal = rawScore.replace(/^Score:\s*/i, '');
 
                   return (
-                    <div key={act.id} className="p-4 hover:bg-slate-50/80 dark:hover:bg-[#2d3446]/60 transition-colors space-y-1">
+                    <div key={act.id || idx} className="p-4 hover:bg-slate-50/80 dark:hover:bg-[#2d3446]/60 transition-colors space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0 w-8">
