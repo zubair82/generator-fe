@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import useSWR from 'swr';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Check,
@@ -89,12 +90,29 @@ function formatUploadedDate(dateStr: string | null | undefined): string {
   }
 }
 
+export interface ExamPapersApiResponse {
+  success: boolean;
+  total_papers?: number;
+  papers?: ExamPaperItem[];
+}
+
+// Stable fetcher for SWR query key: ['exam-papers', token]
+// Calls ONLY /api/exam-papers (no top-papers call)
+const papersFetcher = async ([_key, token]: readonly [string, string]): Promise<ExamPapersApiResponse> => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const response = await fetch(`${apiUrl}/api/exam-papers`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to load exam papers (HTTP ${response.status})`);
+  }
+  return response.json();
+};
+
 export function Papers() {
   const { addToast } = useUI();
   const navigate = useNavigate();
 
-  const [apiPapers, setApiPapers] = useState<ExamPaperItem[]>([]);
-  const [loadingPapers, setLoadingPapers] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabFilter>('ALL');
   const [sortField, setSortField] = useState<SortField>('date');
@@ -128,96 +146,67 @@ export function Papers() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch papers and performance metadata
-  const fetchingRef = useRef(false);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const queryKey = token ? (['exam-papers', token] as const) : null;
+
+  // Single SWR hook for exam-papers: automatically deduplicates in-flight calls and prevents double requests
+  const {
+    data: papersData,
+    error: papersError,
+    isLoading,
+    isValidating,
+    mutate
+  } = useSWR<ExamPapersApiResponse>(
+    queryKey,
+    papersFetcher,
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 4000,
+      keepPreviousData: true
+    }
+  );
+
+  const isInitialLoading = isLoading && !papersData;
+
   useEffect(() => {
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
+    if (papersError) {
+      addToast(papersError.message || 'Failed to load exam papers', 'error');
+    }
+  }, [papersError, addToast]);
 
-    const fetchAllPapersData = async () => {
-      try {
-        const token = localStorage.getItem('auth_token');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const headers = { Authorization: `Bearer ${token}` };
+  // Derive enriched papers directly from the single API payload (no unneeded top-papers call)
+  const apiPapers: ExamPaperItem[] = useMemo(() => {
+    if (!papersData?.papers || !Array.isArray(papersData.papers)) {
+      return [];
+    }
 
-        // 1. Fetch exam papers and top-papers
-        const [papersRes, topPapersRes] = await Promise.allSettled([
-          fetch(`${apiUrl}/api/exam-papers`, { headers }),
-          fetch(`${apiUrl}/api/v1/earnings/top-papers?limit=50`, { headers })
-        ]);
+    return papersData.papers.map(paper => {
+      const totalQ = paper.total_questions ?? paper.questions_count ?? 90;
 
-        let papersList: ExamPaperItem[] = [];
-        if (papersRes.status === 'fulfilled' && papersRes.value.ok) {
-          const data = await papersRes.value.json();
-          papersList = data.papers || [];
-        }
+      const resolvedPrice =
+        paper.price !== undefined && paper.price !== null
+          ? Number(paper.price)
+          : 0;
 
-        // 2. Performance & metrics map from top-papers API
-        const perfMap = new Map<string, { attempts: number; revenue: number; formatted: string; price?: number; duration?: number }>();
-        if (topPapersRes.status === 'fulfilled' && topPapersRes.value.ok) {
-          const topData = await topPapersRes.value.json();
-          if (topData.top_performing_papers && Array.isArray(topData.top_performing_papers)) {
-            topData.top_performing_papers.forEach((p: any) => {
-              if (p.paper_name) {
-                perfMap.set(p.paper_name.toLowerCase(), {
-                  attempts: p.attempts_count || 0,
-                  revenue: p.gross_revenue || 0,
-                  formatted: p.revenue_formatted || (p.gross_revenue ? `₹${p.gross_revenue.toLocaleString('en-IN')}` : '₹0'),
-                  price: p.price ?? p.listing_price,
-                  duration: p.duration ?? p.duration_mins
-                });
-              }
-            });
-          }
-        }
+      const resolvedDuration =
+        paper.duration !== undefined && paper.duration !== null
+          ? Number(paper.duration)
+          : paper.duration_mins !== undefined && paper.duration_mins !== null
+          ? Number(paper.duration_mins)
+          : totalQ > 50 ? 180 : 90;
 
-        // Enrich papers with exact values from DB
-        const enriched = papersList.map(paper => {
-          const perf = perfMap.get(paper.paper_name.toLowerCase());
-          const totalQ = paper.total_questions ?? paper.questions_count ?? 90;
-
-          // Priority: paper.price from DB -> perf.price -> 150 default only if totally missing
-          const resolvedPrice =
-            paper.price !== undefined && paper.price !== null
-              ? Number(paper.price)
-              : perf?.price !== undefined && perf?.price !== null
-              ? Number(perf.price)
-              : 0;
-
-          // Priority: paper.duration / duration_mins from DB -> perf.duration -> fallback based on questions count
-          const resolvedDuration =
-            paper.duration !== undefined && paper.duration !== null
-              ? Number(paper.duration)
-              : paper.duration_mins !== undefined && paper.duration_mins !== null
-              ? Number(paper.duration_mins)
-              : perf?.duration !== undefined && perf?.duration !== null
-              ? Number(perf.duration)
-              : totalQ > 50 ? 180 : 90;
-
-          return {
-            ...paper,
-            display_title: formatPaperTitle(paper.paper_name),
-            price: resolvedPrice,
-            duration: resolvedDuration,
-            duration_mins: resolvedDuration,
-            attempts_count: perf?.attempts || 0,
-            gross_revenue: perf?.revenue || 0,
-            revenue_formatted: perf?.formatted || (perf && perf.revenue > 0 ? `₹${perf.revenue.toLocaleString('en-IN')}` : undefined)
-          };
-        });
-
-        setApiPapers(enriched);
-      } catch (err) {
-        console.error('Failed to fetch papers:', err);
-        addToast('Failed to load exam papers', 'error');
-      } finally {
-        setLoadingPapers(false);
-        fetchingRef.current = false;
-      }
-    };
-
-    fetchAllPapersData();
-  }, [addToast]);
+      return {
+        ...paper,
+        display_title: formatPaperTitle(paper.paper_name),
+        price: resolvedPrice,
+        duration: resolvedDuration,
+        duration_mins: resolvedDuration,
+        attempts_count: paper.attempts_count || 0,
+        gross_revenue: paper.gross_revenue || 0,
+        revenue_formatted: paper.revenue_formatted || (paper.gross_revenue && paper.gross_revenue > 0 ? `₹${paper.gross_revenue.toLocaleString('en-IN')}` : undefined)
+      };
+    });
+  }, [papersData?.papers]);
 
   // Handle Sort Change
   const handleSort = (field: SortField) => {
@@ -252,8 +241,17 @@ export function Papers() {
       );
 
       if (res.ok) {
-        setApiPapers(prev =>
-          prev.map(p => (p.paper_name === paper.paper_name ? { ...p, is_active: newStatus } : p))
+        mutate(
+          current => {
+            if (!current || !current.papers) return current;
+            return {
+              ...current,
+              papers: current.papers.map(p =>
+                p.paper_name === paper.paper_name ? { ...p, is_active: newStatus } : p
+              )
+            };
+          },
+          false
         );
         addToast(`Paper ${newStatus ? 'published live to' : 'unlisted from'} marketplace`, 'success');
       } else {
@@ -325,21 +323,27 @@ export function Papers() {
         );
       }
 
-      // Update local state
-      setApiPapers(prev =>
-        prev.map(p =>
-          p.paper_name === editingPaper.paper_name
-            ? {
-                ...p,
-                display_title: editTitle,
-                paper_type: editPaperType,
-                price: finalPrice,
-                duration: finalDuration,
-                duration_mins: finalDuration,
-                is_active: editIsActive
-              }
-            : p
-        )
+      // Optimistically update local SWR cache
+      mutate(
+        current => {
+          if (!current || !current.papers) return current;
+          return {
+            ...current,
+            papers: current.papers.map(p =>
+              p.paper_name === editingPaper.paper_name
+                ? {
+                    ...p,
+                    paper_type: editPaperType,
+                    price: finalPrice,
+                    duration: finalDuration,
+                    duration_mins: finalDuration,
+                    is_active: editIsActive
+                  }
+                : p
+            )
+          };
+        },
+        false
       );
 
       addToast(`Updated settings for "${editTitle}"`, 'success');
@@ -462,13 +466,24 @@ export function Papers() {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate('/upload_pdf')}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#003fb1] hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all shrink-0"
-        >
-          <FileText className="w-4 h-4" />
-          + Create & Upload New Exam Paper
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => mutate()}
+            disabled={isValidating || isInitialLoading}
+            title="Refresh storefront catalog"
+            className="p-2.5 bg-white dark:bg-[#252b3b] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl shadow-sm transition-all disabled:opacity-50"
+          >
+            <RotateCw className={`w-4 h-4 ${isValidating ? 'animate-spin text-[#003fb1]' : ''}`} />
+          </button>
+
+          <button
+            onClick={() => navigate('/upload_pdf')}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#003fb1] hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-all shrink-0"
+          >
+            <FileText className="w-4 h-4" />
+            + Create & Upload New Exam Paper
+          </button>
+        </div>
       </div>
 
       {/* ============================================================ */}
@@ -690,8 +705,8 @@ export function Papers() {
               </tr>
             </thead>
 
-            <tbody className="text-sm divide-y divide-slate-100 dark:divide-slate-700/60">
-              {loadingPapers ? (
+            <tbody className={`text-sm divide-y divide-slate-100 dark:divide-slate-700/60 transition-opacity duration-200 ${isValidating && !isInitialLoading ? 'opacity-70' : 'opacity-100'}`}>
+              {isInitialLoading ? (
                 <tr>
                   <td colSpan={8} className="text-center p-12 text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-3">
