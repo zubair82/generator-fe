@@ -267,7 +267,7 @@ export function Papers() {
     setEditingPaper(paper);
     setEditTitle(paper.display_title || formatPaperTitle(paper.paper_name));
     setEditPaperType(paper.paper_type || 'Full Mock');
-    setEditPrice(paper.price !== undefined && paper.price !== null ? Number(paper.price) : 150);
+    setEditPrice(paper.price !== undefined && paper.price !== null ? Number(paper.price) : 0);
     setEditDuration(
       paper.duration !== undefined && paper.duration !== null
         ? Number(paper.duration)
@@ -284,6 +284,12 @@ export function Papers() {
     e.preventDefault();
     if (!editingPaper) return;
 
+    const trimmedTitle = editTitle.trim();
+    if (!trimmedTitle) {
+      addToast('Marketplace Title cannot be empty', 'error');
+      return;
+    }
+
     setSavingEdit(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -293,35 +299,34 @@ export function Papers() {
         Authorization: `Bearer ${token}`
       };
 
-      // 1. Update paper duration, price, total_questions on backend
+      // 1. Update paper duration, price, total_questions, is_active, and paper_name on backend
       const totalQ = editingPaper.total_questions ?? editingPaper.questions_count ?? 90;
       const finalPrice = Math.max(0, typeof editPrice === 'string' ? (editPrice === '' ? 0 : parseFloat(editPrice) || 0) : editPrice);
       const finalDuration = Math.max(1, typeof editDuration === 'string' ? (editDuration === '' ? 180 : parseInt(editDuration, 10) || 180) : editDuration);
 
-      await fetch(
+      const res = await fetch(
         `${apiUrl}/api/update-exam-paper/${encodeURIComponent(editingPaper.paper_name)}`,
         {
           method: 'PUT',
           headers,
           body: JSON.stringify({
+            paper_name: trimmedTitle,
             duration: finalDuration,
             price: finalPrice,
             paper_type: editPaperType,
-            total_questions: totalQ
+            total_questions: totalQ,
+            is_active: editIsActive
           })
         }
       );
 
-      // 2. If active status changed, trigger status patch
-      if (editIsActive !== editingPaper.is_active) {
-        await fetch(
-          `${apiUrl}/api/exam-paper/${encodeURIComponent(editingPaper.paper_name)}/status?is_active=${editIsActive}`,
-          {
-            method: 'PATCH',
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server returned error ${res.status}`);
       }
+
+      const resData = await res.json().catch(() => ({}));
+      const updatedPaperName = resData.paper_name || trimmedTitle;
 
       // Optimistically update local SWR cache
       mutate(
@@ -333,6 +338,8 @@ export function Papers() {
               p.paper_name === editingPaper.paper_name
                 ? {
                     ...p,
+                    paper_name: updatedPaperName,
+                    display_title: updatedPaperName,
                     paper_type: editPaperType,
                     price: finalPrice,
                     duration: finalDuration,
@@ -346,11 +353,14 @@ export function Papers() {
         false
       );
 
-      addToast(`Updated settings for "${editTitle}"`, 'success');
+      // Revalidate in background to get latest server state
+      mutate();
+
+      addToast(`Updated settings for "${updatedPaperName}"`, 'success');
       setEditingPaper(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      addToast('Failed to save paper settings', 'error');
+      addToast(err?.message || 'Failed to save paper settings', 'error');
     } finally {
       setSavingEdit(false);
     }
