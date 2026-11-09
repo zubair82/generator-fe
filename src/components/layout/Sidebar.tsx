@@ -28,7 +28,10 @@ export function Sidebar() {
 
   const currentView = (location.pathname.split('/')[1] || 'dashboard') as ViewType;
   const isTeachersActive = location.pathname.startsWith('/teachers') || location.pathname.startsWith('/admin/teachers');
-  const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || 
+  const userRole = (user?.role || '').toUpperCase();
+  const isAdmin = userRole === 'ADMIN' || 
+                  userRole === 'SUPER_ADMIN' ||
+                  userRole.includes('ADMIN') ||
                   window.location.hostname.startsWith('admin.') || 
                   window.location.hostname.includes('admin') || 
                   isTeachersActive;

@@ -114,8 +114,8 @@ export function TeacherDetail() {
   const { token } = useAuth();
   const { addToast } = useUI();
 
-  // Tab State: overview, papers, students, payouts, branding
-  const [activeTab, setActiveTab] = useState<'overview' | 'papers' | 'students' | 'payouts' | 'branding'>('overview');
+  // Tab State: papers (default so authored papers render on load), overview, students, payouts, branding
+  const [activeTab, setActiveTab] = useState<'overview' | 'papers' | 'students' | 'payouts' | 'branding'>('papers');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Pagination states for deep-dive tabs
