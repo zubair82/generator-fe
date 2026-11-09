@@ -19,6 +19,8 @@ import { Review } from './pages/Review';
 import { AddResource } from './pages/AddResource';
 import { Registration } from './pages/Registration';
 import { Students } from './pages/Students';
+import { Teachers } from './pages/Teachers';
+import { TeacherDetail } from './pages/TeacherDetail';
 
 function App() {
   return (
@@ -35,6 +37,10 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/teachers" element={<Teachers />} />
+              <Route path="/admin/teachers" element={<Navigate to="/teachers" replace />} />
+              <Route path="/admin/teachers/:id" element={<TeacherDetail />} />
+              <Route path="/teachers/:id" element={<TeacherDetail />} />
               <Route path="/papers" element={<Papers />} />
               <Route path="/students" element={<Students />} />
               <Route path="/student_roster" element={<Navigate to="/students" replace />} />

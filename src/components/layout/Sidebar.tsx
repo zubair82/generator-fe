@@ -13,7 +13,8 @@ import {
   FileCheck2,
   LogOut,
   PlayCircle,
-  Tv
+  Tv,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
@@ -26,6 +27,11 @@ export function Sidebar() {
   const location = useLocation();
 
   const currentView = (location.pathname.split('/')[1] || 'dashboard') as ViewType;
+  const isTeachersActive = location.pathname.startsWith('/teachers') || location.pathname.startsWith('/admin/teachers');
+  const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || 
+                  window.location.hostname.startsWith('admin.') || 
+                  window.location.hostname.includes('admin') || 
+                  isTeachersActive;
 
   const navigateTo = (view: ViewType, message: string) => {
     navigate('/' + view);
@@ -61,6 +67,20 @@ export function Sidebar() {
           <LayoutDashboard className="w-4 h-4" />
           Dashboard
         </button>
+
+        {/* Teachers - Shown on Admin Portal */}
+        {isAdmin && (
+          <button
+            onClick={() => navigateTo('teachers', 'Loaded Teacher Directory')}
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isTeachersActive
+              ? 'bg-blue-50/70 dark:bg-blue-950/50 text-[#003fb1] dark:text-blue-400 font-semibold border-r-4 border-[#003fb1] dark:border-blue-500'
+              : 'text-[#434654] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+          >
+            <GraduationCap className="w-4 h-4" />
+            Teachers
+          </button>
+        )}
 
         <button
           onClick={() => navigateTo('students', 'Loaded Student Roster')}
