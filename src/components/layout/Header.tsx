@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Bell, HelpCircle, Sun, Moon } from 'lucide-react';
+import { Search, Bell, HelpCircle, Sun, Moon, User as UserIcon } from 'lucide-react';
 import { useUI } from '../../contexts/UIContext';
+import { UpdateProfileModal } from '../profile/UpdateProfileModal';
 
 export function Header() {
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const {
     searchQuery,
     setSearchQuery,
@@ -64,7 +66,7 @@ export function Header() {
           </motion.div>
         </button>
 
-        {/* Notifications Toggle */}
+        {/* Commented out as requested:
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
@@ -110,6 +112,22 @@ export function Header() {
         >
           <HelpCircle className="w-5 h-5" />
         </button>
+        */}
+
+        {/* User Profile / Update Profile Button */}
+        <button
+          onClick={() => setIsProfileModalOpen(true)}
+          title="Update Profile"
+          aria-label="Update Profile"
+          className="w-10 h-10 rounded-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 transition-colors flex items-center justify-center relative cursor-pointer shadow-sm"
+        >
+          <UserIcon className="w-5 h-5" />
+        </button>
+
+        <UpdateProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+        />
       </div>
     </header>
   );
