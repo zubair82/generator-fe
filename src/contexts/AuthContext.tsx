@@ -21,25 +21,50 @@ if (tokenFromUrl) {
   window.history.replaceState({}, document.title, cleanUrl.pathname + (cleanUrl.search || ''));
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
+  token: string | null;
   isLoadingAuth: boolean;
   logout: () => Promise<void>;
   checkAuth: () => void;
+  updateUser?: (data: Partial<User>) => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+declare global {
+  // eslint-disable-next-line no-var
+  var __EXAMSIMULA_AUTH_CONTEXT__: React.Context<AuthContextType> | undefined;
+}
+
+const defaultAuthValue: AuthContextType = {
+  isLoggedIn: Boolean(localStorage.getItem('auth_token')),
+  user: null,
+  token: localStorage.getItem('auth_token'),
+  isLoadingAuth: false,
+  logout: async () => {},
+  checkAuth: () => {},
+  updateUser: () => {}
+};
+
+export const AuthContext: React.Context<AuthContextType> =
+  globalThis.__EXAMSIMULA_AUTH_CONTEXT__ ||
+  (globalThis.__EXAMSIMULA_AUTH_CONTEXT__ = createContext<AuthContextType>(defaultAuthValue));
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
-  const checkAuth = () => {
-    let token = localStorage.getItem('auth_token');
+  const updateUser = (data: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...data } : (data as User));
+  };
 
-    if (!token) {
+  const checkAuth = () => {
+    const currentToken = localStorage.getItem('auth_token');
+    setToken(currentToken);
+
+    if (!currentToken) {
       setIsLoadingAuth(false);
       setIsLoggedIn(false);
       setUser(null);
@@ -47,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetch(`${import.meta.env.VITE_AUTH_URL}/api/v1/auth/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${currentToken}` }
     })
       .then(res => {
         if (!res.ok) {
@@ -66,6 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(err => {
         console.error('Session verification failed:', err);
         localStorage.removeItem('auth_token');
+        setToken(null);
         setIsLoggedIn(false);
         setUser(null);
       })
@@ -80,18 +106,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     const role = user?.role;
-    const token = localStorage.getItem('auth_token');
-    if (token) {
+    const currentToken = localStorage.getItem('auth_token');
+    if (currentToken) {
       try {
         await fetch(`${import.meta.env.VITE_AUTH_URL}/api/v1/auth/logout`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${currentToken}` }
         });
       } catch (err) {
         console.error('Logout error:', err);
       }
     }
     localStorage.removeItem('auth_token');
+    setToken(null);
     setIsLoggedIn(false);
     setUser(null);
 
@@ -107,16 +134,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, isLoadingAuth, logout, checkAuth }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, token, isLoadingAuth, logout, checkAuth, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return context || defaultAuthValue;
 }

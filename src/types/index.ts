@@ -32,9 +32,17 @@ export interface ActivityLog {
 }
 
 export interface User {
+  id?: string;
+  teacher_id?: string;
   name: string;
+  display_name?: string;
   role: string;
   email: string;
+  bio?: string;
+  upi_id?: string;
+  phone?: string;
+  phone_number?: string;
+  banner_path?: string;
 }
 
 export interface Toast {
