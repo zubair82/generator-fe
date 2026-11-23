@@ -72,66 +72,6 @@ export interface AdminMetricsResponse {
   data: AdminMetricsData;
 }
 
-// Fallback seed data in case API is running in mock/offline mode
-const FALLBACK_TEACHERS: TeacherRosterItem[] = [
-  {
-    teacher_id: "uuid-1234",
-    institute_name: "Concept Physics",
-    referral_code: "TCHR-P9X442",
-    roster_size: 840,
-    live_papers: 12,
-    total_earnings_inr: 45000.00,
-    status: "ACTIVE",
-    joined_at: "2025-10-12T10:30:00Z"
-  },
-  {
-    teacher_id: "uuid-5678",
-    institute_name: "Elite Math Academy",
-    referral_code: "TCHR-M2L901",
-    roster_size: 320,
-    live_papers: 5,
-    total_earnings_inr: 18500.00,
-    status: "ACTIVE",
-    joined_at: "2026-01-05T14:15:00Z"
-  },
-  {
-    teacher_id: "uuid-9012",
-    institute_name: "Quantum Chemistry Classes",
-    referral_code: "TCHR-Q7C331",
-    roster_size: 140,
-    live_papers: 3,
-    total_earnings_inr: 7200.00,
-    status: "PENDING",
-    joined_at: "2026-02-14T09:20:00Z"
-  },
-  {
-    teacher_id: "uuid-3456",
-    institute_name: "Kota Physics Hub",
-    referral_code: "TCHR-K4P882",
-    roster_size: 1250,
-    live_papers: 18,
-    total_earnings_inr: 89400.00,
-    status: "ACTIVE",
-    joined_at: "2025-08-20T16:00:00Z"
-  },
-  {
-    teacher_id: "uuid-7890",
-    institute_name: "Apex Biology Institute",
-    referral_code: "TCHR-A1B509",
-    roster_size: 95,
-    live_papers: 1,
-    total_earnings_inr: 3400.00,
-    status: "SUSPENDED",
-    joined_at: "2025-11-30T11:45:00Z"
-  }
-];
-
-const FALLBACK_METRICS: AdminMetricsData = {
-  total_active_teachers: 142,
-  total_supply_volume: 384,
-  total_pending_payouts_inr: 45200.00,
-  total_network_roster: 4250
-};
 
 export function Teachers() {
   const { token } = useAuth();
@@ -189,8 +129,7 @@ export function Teachers() {
     authFetcher,
     {
       revalidateOnFocus: true,
-      dedupingInterval: 10000,
-      fallbackData: { status: 'success', data: FALLBACK_METRICS }
+      dedupingInterval: 10000
     }
   );
 
@@ -218,23 +157,16 @@ export function Teachers() {
     authFetcher,
     {
       revalidateOnFocus: true,
-      dedupingInterval: 5000,
-      fallbackData: {
-        status: 'success',
-        data: FALLBACK_TEACHERS,
-        meta: {
-          current_page: 1,
-          limit: 10,
-          total_records: FALLBACK_TEACHERS.length,
-          total_pages: 1,
-          has_next: false,
-          has_previous: false
-        }
-      }
+      dedupingInterval: 5000
     }
   );
 
-  const metricsData = metricsResponse?.data || FALLBACK_METRICS;
+  const metricsData = metricsResponse?.data || {
+    total_active_teachers: 0,
+    total_supply_volume: 0,
+    total_pending_payouts_inr: 0,
+    total_network_roster: 0
+  };
   const teachers = tableResponse?.data || [];
   const meta: PaginationMeta = tableResponse?.meta || {
     current_page: page,

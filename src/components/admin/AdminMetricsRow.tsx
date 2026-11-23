@@ -21,9 +21,9 @@ export const AdminMetricsRow: React.FC<AdminMetricsRowProps> = ({
     {
       title: "Total Active Teachers",
       value: data?.total_active_teachers !== undefined
-        ? data.total_active_teachers.toLocaleString('en-IN')
-        : "142",
-      subtext: "+12 pending approval",
+        ? Number(data.total_active_teachers).toLocaleString('en-IN')
+        : "0",
+      subtext: "Verified educators",
       icon: <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
       bgColor: "bg-blue-50 dark:bg-blue-950/50",
       borderGlow: "group-hover:border-blue-500/30"
@@ -31,8 +31,8 @@ export const AdminMetricsRow: React.FC<AdminMetricsRowProps> = ({
     {
       title: "Total Supply Volume",
       value: data?.total_supply_volume !== undefined
-        ? data.total_supply_volume.toLocaleString('en-IN')
-        : "384",
+        ? Number(data.total_supply_volume).toLocaleString('en-IN')
+        : "0",
       subtext: "Live exam papers",
       icon: <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />,
       bgColor: "bg-indigo-50 dark:bg-indigo-950/50",
@@ -42,7 +42,7 @@ export const AdminMetricsRow: React.FC<AdminMetricsRowProps> = ({
       title: "Total Pending Payouts",
       value: data?.total_pending_payouts_inr !== undefined
         ? `₹${Number(data.total_pending_payouts_inr).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
-        : "₹45,200",
+        : "₹0",
       subtext: "For current billing cycle",
       icon: <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
       bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
@@ -51,8 +51,8 @@ export const AdminMetricsRow: React.FC<AdminMetricsRowProps> = ({
     {
       title: "Total Network Roster",
       value: data?.total_network_roster !== undefined
-        ? data.total_network_roster.toLocaleString('en-IN')
-        : "4,250",
+        ? Number(data.total_network_roster).toLocaleString('en-IN')
+        : "0",
       subtext: "Students via referral links",
       icon: <Network className="h-5 w-5 text-orange-600 dark:text-orange-400" />,
       bgColor: "bg-orange-50 dark:bg-orange-950/50",

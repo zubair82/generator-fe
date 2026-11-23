@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 import {
@@ -130,6 +130,9 @@ export function TeacherDetail() {
   const [commissionReason, setCommissionReason] = useState('');
   const [isSubmittingCommission, setIsSubmittingCommission] = useState(false);
 
+  // Storefront banner state
+  const [bannerLoadFailed, setBannerLoadFailed] = useState(false);
+
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null);
 
@@ -151,9 +154,10 @@ export function TeacherDetail() {
   // 1. Fetch Core Identity, Financials, and Volume via GET /api/v1/admin/teachers/{teacher_id}
   const {
     data: coreResponse,
+    error: coreError,
     isLoading: isCoreLoading,
     mutate: mutateCore
-  } = useSWR<{ status: string; data: any }>(
+  } = useSWR<{ status: string; data: TeacherCoreData }>(
     id ? `${apiUrl}/api/v1/admin/teachers/${id}` : null,
     authFetcher,
     { revalidateOnFocus: true, dedupingInterval: 5000 }
@@ -192,60 +196,167 @@ export function TeacherDetail() {
     { revalidateOnFocus: true, dedupingInterval: 5000 }
   );
 
-  // Defensive Normalization for Core Data to handle both direct DB shapes and legacy envelopes
-  const rawCore = coreResponse?.data || {};
+  // Loading skeleton when initial core data is fetching
+  if (isCoreLoading && !coreResponse) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        {/* Navigation Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+            <div className="space-y-2">
+              <div className="w-32 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              <div className="w-48 h-6 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="w-28 h-9 rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+            <div className="w-28 h-9 rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+          </div>
+        </div>
+
+        {/* Identity Card Skeleton */}
+        <div className="bg-white dark:bg-[#252b3b] border border-slate-200 dark:border-slate-700/70 rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+              <div className="space-y-2.5">
+                <div className="w-56 h-5 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div className="w-40 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div className="flex gap-3 pt-1">
+                  <div className="w-36 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div className="w-28 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+              </div>
+            </div>
+            <div className="w-full max-w-md h-20 bg-slate-100 dark:bg-[#1a1e29] rounded-xl border border-slate-200 dark:border-slate-700"></div>
+          </div>
+        </div>
+
+        {/* 4 Metric Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(idx => (
+            <div key={idx} className="bg-white dark:bg-[#252b3b] rounded-xl border border-slate-200 dark:border-slate-700/70 p-5 shadow-sm space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <div className="w-28 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div className="w-20 h-6 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700"></div>
+              </div>
+              <div className="w-32 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="h-64 bg-white dark:bg-[#252b3b] rounded-2xl border border-slate-200 dark:border-slate-700/70 flex items-center justify-center text-slate-400">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
+            <span className="text-sm font-medium">Loading educator records from database...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error view if core data request failed
+  if (coreError && !coreResponse) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/teachers')}
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700/70 bg-white dark:bg-[#252b3b] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shadow-xs cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <div className="text-xs text-slate-400 font-medium">
+              <Link to="/teachers" className="hover:text-blue-600 dark:hover:text-blue-400">Teachers</Link>
+              <span> / Error</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+              Teacher Record Not Found
+            </h1>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#252b3b] border border-rose-200 dark:border-rose-900/60 rounded-2xl p-8 shadow-sm text-center max-w-lg mx-auto space-y-4">
+          <div className="w-14 h-14 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Could not load educator details
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {coreError?.message || `No educator found with ID "${id}". The record may have been removed or you may lack administrator privileges.`}
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => navigate('/teachers')}
+              className="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              Back to Teachers
+            </button>
+            <button
+              onClick={() => mutateCore()}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Strict Normalization for Core Data directly from Database
+  const rawCore = (coreResponse?.data || {}) as any;
   const rawIdentity = rawCore.identity || rawCore || {};
   const rawFinancials = rawCore.financials || {};
   const rawVolume = rawCore.volume || {};
   const rawAttribution = rawFinancials.attribution || {};
 
-  const teacherId = String(rawIdentity.teacher_id || id || 'uuid-1234');
-  const instituteName = String(rawIdentity.institute_name || rawCore.institute_name || 'Educator Institute');
-  const teacherName = String(rawIdentity.name || rawCore.name || 'Primary Educator');
-  const email = String(rawIdentity.email || rawCore.email || '');
-  const phone = rawIdentity.phone || rawCore.phone || null;
-  const upiId = rawIdentity.upi_id || rawCore.upi_id || null;
-  const bio = rawIdentity.bio || rawCore.bio || null;
-  const bannerPath = rawIdentity.banner_path || rawCore.banner_path || `/banner/${teacherId}`;
-  const referralCode = rawIdentity.referral_code || rawCore.referral_code || null;
-  const status = String(rawIdentity.status || rawCore.status || 'ACTIVE').toUpperCase();
-  const joinedAt = rawIdentity.joined_at || rawCore.joined_at || null;
-  const revenueSharePct = Number(rawIdentity.revenue_share_pct ?? rawCore.revenue_share_pct ?? 70);
+  const teacherId = String(rawIdentity.teacher_id || id || '');
+  const instituteName = String(rawIdentity.institute_name || rawIdentity.name || 'Educator');
+  const teacherName = String(rawIdentity.name || rawIdentity.institute_name || 'Educator');
+  const email = String(rawIdentity.email || '');
+  const phone = rawIdentity.phone || null;
+  const upiId = rawIdentity.upi_id || null;
+  const bio = rawIdentity.bio || null;
+  const bannerPath = rawIdentity.banner_path || null;
+  const referralCode = rawIdentity.referral_code || null;
+  const status = String(rawIdentity.status || 'ACTIVE').toUpperCase();
+  const joinedAt = rawIdentity.joined_at || null;
+  const revenueSharePct = Number(rawIdentity.revenue_share_pct ?? 70);
 
-  // Financial Figures
-  const totalNetEarnings = Number(
-    rawFinancials.total_net_earnings ??
-    rawCore.total_earnings_inr ??
-    rawCore.metrics?.total_earnings_inr ??
-    0
-  );
-  const pendingPayout = Number(
-    rawFinancials.pending_payout ??
-    rawCore.pending_payout_inr ??
-    rawCore.metrics?.pending_payout_inr ??
-    0
-  );
+  // Financial Figures directly from Database
+  const totalNetEarnings = Number(rawFinancials.total_net_earnings ?? 0);
+  const pendingPayout = Number(rawFinancials.pending_payout ?? 0);
   const lastPayoutDate = rawFinancials.last_payout_date || null;
 
-  // Attribution Breakdown (Direct 70%, Marketplace 50%, Affiliate 20%)
+  // Attribution Breakdown directly from Database
   const directReferralAttribution: AttributionTier = rawAttribution.direct_referral || {
-    revenue: Math.round(totalNetEarnings * 0.7),
-    student_count: Math.round(Number(rawVolume.roster_count || 0) * 0.75)
+    revenue: 0,
+    student_count: 0
   };
   const marketplaceAttribution: AttributionTier = rawAttribution.marketplace || {
-    revenue: Math.round(totalNetEarnings * 0.3),
-    student_count: Math.max(0, Number(rawVolume.roster_count || 0) - directReferralAttribution.student_count)
+    revenue: 0,
+    student_count: 0
   };
   const affiliateAttribution: AttributionTier = rawAttribution.network_affiliate || {
     revenue: 0,
     student_count: 0
   };
 
-  // Volume Stats
-  const activePapersCount = Number(rawVolume.active_papers ?? rawCore.live_papers ?? rawCore.metrics?.live_papers ?? 0);
+  // Content Volume Stats directly from Database
+  const activePapersCount = Number(rawVolume.active_papers ?? 0);
   const draftPapersCount = Number(rawVolume.draft_papers ?? 0);
-  const totalTestAttempts = Number(rawVolume.total_test_attempts ?? rawCore.metrics?.total_attempts ?? (activePapersCount * 45));
-  const rosterCount = Number(rawVolume.roster_count ?? rawCore.roster_size ?? rawCore.metrics?.roster_size ?? 0);
+  const totalTestAttempts = Number(rawVolume.total_test_attempts ?? 0);
+  const rosterCount = Number(rawVolume.roster_count ?? 0);
 
   // Deep-dive items
   const papersList: PaperTabItem[] = papersResponse?.data || [];
@@ -278,7 +389,23 @@ export function TeacherDetail() {
     has_previous: payoutsPage > 1
   };
 
+  // Resolved Banner URL calculation
+  const resolvedBannerUrl = useMemo(() => {
+    if (!bannerPath) return null;
+    if (bannerPath.startsWith('http://') || bannerPath.startsWith('https://')) {
+      return bannerPath;
+    }
+    if (bannerPath.startsWith('/')) {
+      return `${apiUrl}${bannerPath}`;
+    }
+    return `${apiUrl}/api/banner/${teacherId}/${bannerPath}`;
+  }, [bannerPath, apiUrl, teacherId]);
+
   const handleCopy = (text: string, field: string) => {
+    if (!text) {
+      addToast(`No ${field} available to copy`, 'warning');
+      return;
+    }
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     addToast(`Copied ${field} to clipboard`, 'info');
@@ -298,8 +425,8 @@ export function TeacherDetail() {
         },
         body: JSON.stringify({
           action,
-          reason: payload?.reason || (action === 'SUSPEND' ? 'Administrative suspension' : 'Administrative activation'),
-          commission_tier_override: payload?.commission_tier_override
+          reason: payload?.reason || (action === 'SUSPEND' ? 'Administrative suspension' : action === 'ACTIVATE' ? 'Administrative activation' : 'Commission override'),
+          commission_tier_override: payload?.commission_tier_override ?? null
         })
       });
 
@@ -312,7 +439,10 @@ export function TeacherDetail() {
               'Content-Type': 'application/json',
               ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
             },
-            body: JSON.stringify({ status: action === 'ACTIVATE' ? 'ACTIVE' : 'SUSPENDED' })
+            body: JSON.stringify({
+              status: action === 'ACTIVATE' ? 'ACTIVE' : 'SUSPENDED',
+              rejection_reason: payload?.reason || ''
+            })
           });
         } else {
           const errData = await res.json().catch(() => ({}));
@@ -320,7 +450,13 @@ export function TeacherDetail() {
         }
       }
 
-      await mutateCore();
+      await Promise.all([
+        mutateCore(),
+        mutatePapers(),
+        mutateStudents(),
+        mutatePayouts()
+      ]);
+
       addToast(
         action === 'OVERRIDE_COMMISSION'
           ? `Commission revenue share updated to ${payload.commission_tier_override}%`
@@ -378,9 +514,13 @@ export function TeacherDetail() {
 
   const initials = instituteName
     ? instituteName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-    : 'T';
+    : teacherName
+      ? teacherName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+      : 'ED';
 
-  const referralUrl = `http://examsimula.com/question-papers?ref=${referralCode || ''}`;
+  const referralUrl = referralCode
+    ? `https://examsimula.com/question-papers?ref=${referralCode}`
+    : '';
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -1117,22 +1257,28 @@ export function TeacherDetail() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="font-semibold">Aspect Ratio: Fixed 5:1 (1200 &times; 240px)</span>
-              <span>Banner Path: {bannerPath}</span>
+              <span>Banner: {bannerPath ? 'Custom banner uploaded' : 'Default system banner'}</span>
             </div>
 
             <div className="w-full aspect-[5/1] rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a1e29] overflow-hidden flex items-center justify-center relative shadow-inner">
-              {bannerPath ? (
+              {resolvedBannerUrl && !bannerLoadFailed ? (
+                <div className="w-full h-full relative">
+                  <img
+                    src={resolvedBannerUrl}
+                    alt={`${instituteName} Banner`}
+                    className="w-full h-full object-cover"
+                    onError={() => setBannerLoadFailed(true)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">
+                    <p className="text-white text-sm font-bold drop-shadow-sm">{instituteName}</p>
+                  </div>
+                </div>
+              ) : (
                 <div className="w-full h-full relative flex items-center justify-center bg-gradient-to-r from-blue-900 to-indigo-950 text-white">
                   <div className="text-center p-4">
                     <p className="text-lg font-bold">{instituteName}</p>
                     <p className="text-xs text-slate-300 mt-1">{bio || "Curated Mock Examination Series"}</p>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center p-6 text-slate-400">
-                  <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-xs font-semibold">No custom banner uploaded yet</p>
-                  <p className="text-[11px] mt-0.5">The default ExamSimula teacher referral banner is displayed to students.</p>
                 </div>
               )}
             </div>
